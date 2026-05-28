@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>API Test</title></head>
+<body>
+<h1>API Test</h1>
+<button onclick="testLogin()">Test Login</button>
+<pre id="result"></pre>
+<script>
+async function testLogin() {
+  try {
+    const res = await fetch('http://localhost:5001/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'Admin123!' })
+    });
+    const data = await res.json();
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    if (data.success) {
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
+      alert('Login saved! Now go to: http://localhost:3000');
+    }
+  } catch (err) {
+    document.getElementById('result').textContent = 'Error: ' + err.message;
+  }
+}
+</script>
+</body>
+</html>
