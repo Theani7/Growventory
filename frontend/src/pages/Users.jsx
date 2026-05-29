@@ -266,94 +266,98 @@ const Users = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table-modern">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u) => {
-                  const isPending = u.account_status === 'pending';
-                  return (
-                    <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 ${
-                            isPending
-                              ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                              : 'bg-gradient-to-br from-moss-500 to-accent-teal'
-                          }`}>
-                            {u.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-ink-900 truncate">{u.username}</p>
-                            {u.full_name && <p className="text-xs text-ink-500 truncate">{u.full_name}</p>}
-                            {u.phone && <p className="text-xs text-ink-400 truncate">{u.phone}</p>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-ink-600">{u.email}</td>
-                      <td>
-                        {u.role_name ? (
-                          <span className={`${roleColors[u.role_name] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
-                        ) : (
-                          <span className="text-ink-400 text-sm italic">Not assigned</span>
-                        )}
-                      </td>
-                      <td>
-                        {u.account_status === 'pending' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 text-amber-700 bg-amber-50 ring-amber-200">
-                            <Clock className="w-3 h-3" /> Pending
-                          </span>
-                        )}
-                        {u.account_status === 'active' && <span className="badge-success">Active</span>}
-                        {u.account_status === 'disabled' && <span className="badge-neutral">Disabled</span>}
-                      </td>
-                      <td>
-                        <div className="flex items-center justify-end gap-1">
-                          {isPending ? (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setApproveTarget(u);
-                                  setApproveRoleId(roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || '');
-                                }}
-                                disabled={actioning === u.user_id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition"
-                                title="Approve"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
-                              </button>
-                              <button
-                                onClick={() => { setRejectTarget(u); setRejectReason(''); }}
-                                disabled={actioning === u.user_id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-red-600 ring-1 ring-red-200 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition"
-                                title="Reject"
-                              >
-                                <XCircle className="w-3.5 h-3.5" /> Reject
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={() => openModal(u)} className="btn-icon" title="Edit"><Edit className="w-4 h-4" /></button>
-                              <button onClick={() => handleResetPassword(u.user_id)} className="btn-icon" title="Reset password"><Key className="w-4 h-4" /></button>
-                              <button onClick={() => handleToggleActive(u.user_id)} className="btn-icon" title="Toggle status"><Power className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete(u.user_id)} className="btn-icon hover:!text-red-600 hover:!bg-red-50" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-full inline-block align-middle">
+              <div className="overflow-hidden">
+                <table className="table-modern min-w-full">
+                  <thead>
+                    <tr>
+                      <th className="whitespace-nowrap">User</th>
+                      <th className="whitespace-nowrap">Email</th>
+                      <th className="whitespace-nowrap">Role</th>
+                      <th className="whitespace-nowrap">Status</th>
+                      <th className="whitespace-nowrap text-right">Actions</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {filtered.map((u) => {
+                      const isPending = u.account_status === 'pending';
+                      return (
+                        <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
+                          <td className="whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 ${
+                                isPending
+                                  ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                                  : 'bg-gradient-to-br from-moss-500 to-accent-teal'
+                              }`}>
+                                {u.username.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-ink-900 truncate">{u.username}</p>
+                                {u.full_name && <p className="text-xs text-ink-500 truncate">{u.full_name}</p>}
+                                {u.phone && <p className="text-xs text-ink-400 truncate">{u.phone}</p>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap text-ink-600">{u.email}</td>
+                          <td className="whitespace-nowrap">
+                            {u.role_name ? (
+                              <span className={`${roleColors[u.role_name] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
+                            ) : (
+                              <span className="text-ink-400 text-sm italic">Not assigned</span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap">
+                            {u.account_status === 'pending' && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 text-amber-700 bg-amber-50 ring-amber-200">
+                                <Clock className="w-3 h-3" /> Pending
+                              </span>
+                            )}
+                            {u.account_status === 'active' && <span className="badge-success">Active</span>}
+                            {u.account_status === 'disabled' && <span className="badge-neutral">Disabled</span>}
+                          </td>
+                          <td className="whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {isPending ? (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setApproveTarget(u);
+                                      setApproveRoleId(roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || '');
+                                    }}
+                                    disabled={actioning === u.user_id}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition min-h-[36px]"
+                                    title="Approve"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                                  </button>
+                                  <button
+                                    onClick={() => { setRejectTarget(u); setRejectReason(''); }}
+                                    disabled={actioning === u.user_id}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-red-600 ring-1 ring-red-200 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition min-h-[36px]"
+                                    title="Reject"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" /> Reject
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => openModal(u)} className="btn-icon min-h-[36px] min-w-[36px]" title="Edit"><Edit className="w-4 h-4" /></button>
+                                  <button onClick={() => handleResetPassword(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px]" title="Reset password"><Key className="w-4 h-4" /></button>
+                                  <button onClick={() => handleToggleActive(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px]" title="Toggle status"><Power className="w-4 h-4" /></button>
+                                  <button onClick={() => handleDelete(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>

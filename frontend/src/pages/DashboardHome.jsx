@@ -121,36 +121,36 @@ const DashboardHome = () => {
   return (
     <div className="space-y-6">
       {/* Hero / Greeting */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss-700 via-moss-600 to-accent-teal p-8 lg:p-10 shadow-elevated-lg">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-        <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-accent-mint/20 rounded-full blur-3xl translate-y-1/2"></div>
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-moss-300/10 rounded-full blur-3xl"></div>
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-moss-700 via-moss-600 to-accent-teal p-6 sm:p-8 lg:p-10 shadow-elevated-lg">
+        <div className="absolute top-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+        <div className="absolute bottom-0 left-1/3 w-48 sm:w-72 h-48 sm:h-72 bg-accent-mint/20 rounded-full blur-3xl translate-y-1/2"></div>
+        <div className="absolute -top-12 -left-12 sm:-top-20 sm:-left-20 w-48 sm:w-72 h-48 sm:h-72 bg-moss-300/10 rounded-full blur-3xl"></div>
         <div className="relative flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-[11px] font-semibold text-white ring-1 ring-white/20 mb-4">
-              <Sparkles className="w-3 h-3" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-[10px] sm:text-[11px] font-semibold text-white ring-1 ring-white/20 mb-3 sm:mb-4">
+              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               {getGreeting()}
             </div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight font-display">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight font-display">
               Welcome back, {user?.full_name?.split(' ')[0] || user?.username}
             </h1>
-            <p className="text-white/80 mt-2 text-sm max-w-xl">
+            <p className="text-white/80 mt-2 text-xs sm:text-sm max-w-xl">
               Here's a snapshot of your nursery operations. Track plants, monitor stock levels, and stay on top of everything.
             </p>
           </div>
           <button
             onClick={fetchDashboardData}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur rounded-xl text-sm font-semibold text-white transition-all ring-1 ring-white/20 flex-shrink-0"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur rounded-xl text-xs sm:text-sm font-semibold text-white transition-all ring-1 ring-white/20 flex-shrink-0 min-h-[44px]"
             title="Refresh dashboard"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard 
           label="Total Plants" 
           value={overview?.total_plants || 0} 
@@ -182,10 +182,10 @@ const DashboardHome = () => {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Health distribution */}
-        <div className="card p-6 lg:col-span-1">
-          <div className="flex items-center justify-between mb-5">
+        <div className="card p-4 sm:p-6 lg:col-span-1">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <p className="eyebrow">Distribution</p>
               <h2 className="section-title mt-1">Plant Health</h2>
@@ -193,7 +193,7 @@ const DashboardHome = () => {
           </div>
           {healthSummary.length > 0 ? (
             <>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={180} className="text-xs">
                 <PieChart>
                   <Pie
                     data={healthSummary}
@@ -201,8 +201,8 @@ const DashboardHome = () => {
                     nameKey="health_status"
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
+                    innerRadius={45}
+                    outerRadius={70}
                     paddingAngle={3}
                     cornerRadius={4}
                   >
@@ -215,21 +215,21 @@ const DashboardHome = () => {
                       background: 'white',
                       border: 'none',
                       borderRadius: '12px',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       boxShadow: '0 12px 32px -8px rgba(17, 24, 28, 0.12)',
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="space-y-2.5 mt-3">
+              <div className="space-y-2 mt-3">
                 {healthSummary.map((item) => (
-                  <div key={item.health_status} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2.5">
+                  <div key={item.health_status} className="flex items-center justify-between text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
                       <div
-                        className="w-3 h-3 rounded-md"
+                        className="w-2.5 h-2.5 rounded-md"
                         style={{ background: HEALTH_COLORS[item.health_status] || '#9ba4b5' }}
                       ></div>
-                      <span className="text-ink-600">{formatHealthLabel(item.health_status)}</span>
+                      <span className="text-ink-600 truncate">{formatHealthLabel(item.health_status)}</span>
                     </div>
                     <span className="font-bold text-ink-900 tabular-nums">{item.count}</span>
                   </div>
@@ -237,44 +237,44 @@ const DashboardHome = () => {
               </div>
             </>
           ) : (
-            <div className="h-48 flex items-center justify-center text-ink-400 text-sm">No data available</div>
+            <div className="h-40 flex items-center justify-center text-ink-400 text-sm">No data available</div>
           )}
         </div>
 
         {/* Stock by Category */}
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
+        <div className="card p-4 sm:p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <p className="eyebrow">Inventory</p>
               <h2 className="section-title mt-1">Stock by Category</h2>
             </div>
           </div>
           {categoryStats.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={240} className="text-xs">
               <BarChart data={categoryStats} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef0f4" />
                 <XAxis
                   dataKey="category_name"
-                  tick={{ fontSize: 11, fill: '#727b8e' }}
+                  tick={{ fontSize: 10, fill: '#727b8e' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis tick={{ fontSize: 11, fill: '#727b8e' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#727b8e' }} axisLine={false} tickLine={false} />
                 <ChartTooltip
                   cursor={{ fill: '#f7f8fa' }}
                   contentStyle={{
                     background: 'white',
                     border: 'none',
                     borderRadius: '12px',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     boxShadow: '0 12px 32px -8px rgba(17, 24, 28, 0.12)',
                   }}
                 />
-                <Bar dataKey="total_stock" fill="#1d8147" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="total_stock" fill="#1d8147" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-64 flex items-center justify-center text-ink-400 text-sm">No data available</div>
+            <div className="h-56 flex items-center justify-center text-ink-400 text-sm">No data available</div>
           )}
         </div>
       </div>

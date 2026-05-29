@@ -139,7 +139,7 @@ const Navbar = ({ onMenuClick }) => {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={onMenuClick}
-              className="lg:hidden btn-icon"
+              className="lg:hidden btn-icon min-h-[44px] min-w-[44px]"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -183,6 +183,7 @@ const Navbar = ({ onMenuClick }) => {
               </button>
             )}
 
+            {/* Desktop user info */}
             <div className="hidden sm:flex items-center gap-3 pl-2 ml-1">
               <div className="text-right">
                 <p className="text-sm font-bold text-ink-900 leading-tight">{user?.username}</p>
@@ -235,6 +236,55 @@ const Navbar = ({ onMenuClick }) => {
                   </>
                 )}
               </div>
+            </div>
+
+            {/* Mobile user menu */}
+            <div className="sm:hidden relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-9 h-9 bg-gradient-to-br from-moss-500 to-accent-teal rounded-xl flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md ring-2 ring-white"
+                aria-label="User menu"
+              >
+                {user?.username?.charAt(0).toUpperCase()}
+              </button>
+
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-elevated-lg ring-1 ring-ink-100 py-1 z-20 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-ink-100">
+                      <p className="text-sm font-bold text-ink-900 truncate">{user?.username}</p>
+                      <p className="text-xs text-ink-500 truncate">{user?.email}</p>
+                      <span className={`${getRoleBadge(user?.role_name)} mt-1.5 capitalize text-[10px] py-0.5`}>
+                        {user?.role_name}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    {user?.role_name === 'admin' && (
+                      <button
+                        onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </button>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

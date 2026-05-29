@@ -44,7 +44,7 @@ const Sidebar = ({ onClose, collapsed = false }) => {
       to={item.path}
       end={item.end}
       onClick={onClose}
-      className={({ isActive }) => isActive ? 'nav-link-active' : 'nav-link'}
+      className={({ isActive }) => isActive ? 'nav-link-active min-h-[44px]' : 'nav-link min-h-[44px]'}
       title={collapsed ? item.label : undefined}
     >
       {({ isActive }) => (
