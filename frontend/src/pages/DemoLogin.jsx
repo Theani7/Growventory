@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const DemoLogin = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { demoLogin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const demoUsers = [
@@ -37,9 +37,8 @@ const DemoLogin = () => {
         token: 'demo_token_' + Date.now(),
       };
       
-      // Store in localStorage for demo
-      localStorage.setItem('demo_user', JSON.stringify(mockUser));
-      localStorage.setItem('demo_mode', 'true');
+      // Use demoLogin function from AuthContext
+      demoLogin(mockUser);
       
       // Navigate to dashboard
       navigate('/dashboard');
