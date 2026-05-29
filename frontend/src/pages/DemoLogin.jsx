@@ -111,27 +111,7 @@ const DemoLogin = () => {
             ))}
           </div>
 
-          {/* Demo Features */}
-          <div className="bg-forest-50 border border-forest-100 rounded-xl p-5">
-            <h3 className="font-bold text-forest-900 mb-3">Demo Features</h3>
-            <div className="space-y-2">
-              {[
-                'Full navigation with role-based sidebar',
-                'Pre-filled plants, stock, health data',
-                'Interactive tables & charts',
-                'Notifications & activity logs',
-                'Settings page with toggles',
-                'User management interface',
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-forest-100 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-forest-600" />
-                  </div>
-                  <span className="text-sm text-forest-800">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* Links */}
           <div className="mt-8 pt-6 border-t border-ink-100">
