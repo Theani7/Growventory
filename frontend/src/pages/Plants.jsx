@@ -6,10 +6,14 @@ import {
   LayoutGrid, List, ImageIcon, Upload, Download, FileSpreadsheet, HelpCircle
 } from 'lucide-react';
 import Tooltip from '../components/Tooltip';
+import { useAuth } from '../context/AuthContext';
 
 const API_HOST = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api').replace('/api', '');
 
 const Plants = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role_name === 'admin';
+  const canEdit = ['admin', 'staff'].includes(user?.role_name);
   const [plants, setPlants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +25,7 @@ const Plants = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [editingPlant, setEditingPlant] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -54,7 +59,9 @@ const Plants = () => {
     try {
       const { data } = await api.get('/categories');
       setCategories(data.data || []);
-    } catch {}
+    } catch (error) {
+      toast.error('Failed to fetch categories');
+    }
   };
 
   const handleSearch = () => {
@@ -96,10 +103,10 @@ const Plants = () => {
   };
 
   const handleDelete = async (plant) => {
-    if (!confirm(`Delete "${plant.name}"? This action cannot be undone.`)) return;
     try {
       await api.delete(`/plants/${plant.plant_id}`);
       toast.success('Plant deleted');
+      setDeleteTarget(null);
       fetchPlants();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Delete failed');
@@ -227,15 +234,19 @@ const Plants = () => {
               <HelpCircle className="w-4 h-4" />
             </button>
           </Tooltip>
-          <button onClick={() => setShowImportModal(true)} className="btn-secondary">
-            <Upload className="w-4 h-4" /> Import
-          </button>
+          {isAdmin && (
+            <button onClick={() => setShowImportModal(true)} className="btn-secondary">
+              <Upload className="w-4 h-4" /> Import
+            </button>
+          )}
           <button onClick={() => downloadExport()} className="btn-secondary">
             <Download className="w-4 h-4" /> Export
           </button>
-          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary">
-            <Plus className="w-4 h-4" /> Add Plant
-          </button>
+          {canEdit && (
+            <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary">
+              <Plus className="w-4 h-4" /> Add Plant
+            </button>
+          )}
         </div>
       </div>
 
@@ -372,9 +383,11 @@ const Plants = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No plants yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Get started by adding your first plant.</p>
-          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary inline-flex">
-            <Plus className="w-4 h-4" /> Add Plant
-          </button>
+          {canEdit && (
+            <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary inline-flex">
+              <Plus className="w-4 h-4" /> Add Plant
+            </button>
+          )}
         </div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -429,16 +442,20 @@ const Plants = () => {
                     </p>
                   </div>
                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEditModal(plant)} className="btn-icon" title="Edit">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(plant)}
-                      className="btn-icon hover:!text-red-600 hover:!bg-red-50"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canEdit && (
+                      <button onClick={() => openEditModal(plant)} className="btn-icon" title="Edit">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={() => setDeleteTarget(plant)}
+                        className="btn-icon hover:!text-red-600 hover:!bg-red-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -491,12 +508,16 @@ const Plants = () => {
                         </td>
                         <td className="whitespace-nowrap">
                           <div className="flex justify-center gap-1">
-                            <button onClick={() => openEditModal(plant)} className="btn-icon min-h-[36px] min-w-[36px]">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleDelete(plant)} className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {canEdit && (
+                              <button onClick={() => openEditModal(plant)} className="btn-icon min-h-[36px] min-w-[36px]">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {isAdmin && (
+                              <button onClick={() => setDeleteTarget(plant)} className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -568,9 +589,43 @@ const Plants = () => {
                 <label className="label">Image</label>
                 <label className="cursor-pointer flex items-center gap-3 px-4 py-3 ring-1 ring-dashed ring-ink-300 rounded-xl hover:ring-ink-900 hover:bg-ink-50 transition min-h-[44px]">
                   <ImageIcon className="w-5 h-5 text-ink-400" />
-                  <span className="text-sm text-ink-600 flex-1 truncate">{formData.image ? formData.image.name : 'Click to upload image'}</span>
-                  <input type="file" accept="image/*" onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })} className="hidden" />
+                  <span className="text-sm text-ink-600 flex-1 truncate">
+                    {formData.image ? formData.image.name : 'Click to upload image (JPG, PNG, WEBP, GIF — max 5MB)'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                      if (!allowed.includes(file.type)) {
+                        toast.error('Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed.');
+                        e.target.value = '';
+                        return;
+                      }
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error('Image too large. Maximum size is 5MB.');
+                        e.target.value = '';
+                        return;
+                      }
+                      setFormData({ ...formData, image: file });
+                    }}
+                    className="hidden"
+                  />
                 </label>
+                {formData.image && (
+                  <div className="mt-2 flex items-center justify-between text-xs text-ink-500 px-1">
+                    <span>{(formData.image.size / 1024).toFixed(1)} KB</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image: null })}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
             <div className="flex flex-col sm:flex-row gap-3 justify-end p-4 sm:p-5 border-t border-ink-100 bg-ink-50/40">
@@ -636,6 +691,43 @@ const Plants = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Delete Plant</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 rounded-xl p-4 ring-1 ring-red-100">
+                <p className="font-bold text-ink-900">{deleteTarget.name}</p>
+                {deleteTarget.scientific_name && <p className="text-sm text-ink-600 italic">{deleteTarget.scientific_name}</p>}
+                <p className="text-sm text-ink-500 mt-1">Stock: {deleteTarget.current_stock}</p>
+              </div>
+              <div className="bg-amber-50 rounded-xl p-4 ring-1 ring-amber-200">
+                <p className="text-sm text-amber-800 font-semibold">⚠️ Warning</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Deleting this plant will permanently remove all associated data including stock movements and health logs.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget)} className="btn-danger">Delete Plant</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

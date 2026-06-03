@@ -84,6 +84,7 @@ const DashboardHome = () => {
       setHealthSummary(healthRes.data.data || []);
       setAdvancedAnalytics(analyticsRes.data.data);
     } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch dashboard data');
       console.error('Failed to fetch dashboard data:', error);
     } finally {
       setLoading(false);
