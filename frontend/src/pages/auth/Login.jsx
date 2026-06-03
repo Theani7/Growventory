@@ -70,10 +70,6 @@ const Login = () => {
               <Link to="/register" className="text-forest-700 hover:text-forest-800 font-semibold transition-colors">
                 Create an account
               </Link>
-              {' '}or{' '}
-              <Link to="/demo" className="text-purple-700 hover:text-purple-800 font-semibold transition-colors">
-                try the demo
-              </Link>
             </p>
           </div>
 
