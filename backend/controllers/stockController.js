@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { notifyAdminsAndSupervisors, createNotification } = require('./notificationController');
+const stockService = require('../services/stockService');
 
 // Helper — read a system setting (returns string or default)
 const getSetting = async (key, defaultValue = '') => {
@@ -180,49 +181,64 @@ const createMovement = async (req, res) => {
     // Approval policy: staff requires approval if setting is on; supervisor/admin auto-approve
     const approvalRequired = await getSetting('require_stock_approval', 'false');
     const needsApproval = approvalRequired === 'true' && role === 'staff';
-    const approval_status = needsApproval ? 'pending' : 'approved';
+    
+    let movementId;
+    let final_new_stock;
 
-    // Insert movement
-    const [movementResult] = await connection.execute(
-      `INSERT INTO stock_movements 
-        (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status, approved_by, approved_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        plant_id, type, qty, previous_stock, new_stock,
-        notes || null, user_id, approval_status,
-        needsApproval ? null : user_id,
-        needsApproval ? null : new Date()
-      ]
-    );
-
-    // If auto-approved, apply stock change immediately
     if (!needsApproval) {
-      await connection.execute(
-        'UPDATE plants SET current_stock = ? WHERE plant_id = ?',
-        [new_stock, plant_id]
+      // Use StockService for atomic update and auto-approved movement record
+      const result = await stockService.updateStock(
+        plant_id,
+        qty,
+        type,
+        user_id,
+        notes || (type === 'ADJUSTMENT' ? 'Manual adjustment' : `Stock ${type.toLowerCase()}`),
+        connection
       );
+      
+      movementId = result.movementId;
+      final_new_stock = result.newStock;
 
       await connection.execute(
         `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
          VALUES (?, ?, ?, ?, ?)`,
         [user_id, 'STOCK_' + type, 'plants', plant_id,
-          `Stock ${type.toLowerCase()}: ${plant.name} - ${type === 'ADJUSTMENT' ? `set to ${qty}` : qty} (${previous_stock} → ${new_stock})`]
+          `Stock ${type.toLowerCase()}: ${plant.name} - ${type === 'ADJUSTMENT' ? `set to ${qty}` : qty} (${previous_stock} → ${final_new_stock})`]
       );
 
+      // Notify admins/supervisors of new stock movement (if created by staff - though here needsApproval is false)
+      // If a supervisor/admin does it, we might still want to notify others?
+      if (role === 'staff') {
+        await notifyAdminsAndSupervisors(
+          'Stock Movement Recorded',
+          `${req.user.username} recorded a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}" (${previous_stock} → ${final_new_stock}).`,
+          'system'
+        );
+      }
+
       // Low-stock alert
-      if (new_stock <= plant.min_stock_threshold) {
+      if (final_new_stock <= plant.min_stock_threshold) {
         await notifyAdminsAndSupervisors(
           'Low Stock Alert',
-          `${plant.name} is low on stock: ${new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
+          `${plant.name} is low on stock: ${final_new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
           'low_stock'
         );
       }
     } else {
-      // Pending approval — log + notify approvers
+      // Pending approval — insert movement record manually as 'pending'
+      const [movementResult] = await connection.execute(
+        `INSERT INTO stock_movements 
+          (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [plant_id, type, qty, previous_stock, new_stock, notes || null, user_id]
+      );
+      
+      movementId = movementResult.insertId;
+
       await connection.execute(
         `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
          VALUES (?, ?, ?, ?, ?)`,
-        [user_id, 'STOCK_PENDING', 'stock_movements', movementResult.insertId,
+        [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
           `Pending ${type.toLowerCase()} of ${qty} for ${plant.name} — awaiting supervisor approval`]
       );
 
@@ -241,7 +257,7 @@ const createMovement = async (req, res) => {
        JOIN plants p ON sm.plant_id = p.plant_id 
        LEFT JOIN users u ON sm.created_by = u.user_id 
        WHERE sm.movement_id = ?`,
-      [movementResult.insertId]
+      [movementId]
     );
 
     res.status(201).json({
@@ -297,52 +313,25 @@ const approveMovement = async (req, res) => {
       });
     }
 
-    // Re-fetch plant with lock to recompute against latest stock
-    const [plants] = await connection.execute(
-      'SELECT current_stock FROM plants WHERE plant_id = ? FOR UPDATE',
-      [movement.plant_id]
-    );
-    const currentStock = plants[0].current_stock;
-    const qty = movement.quantity;
-    const type = movement.movement_type;
-
-    let new_stock;
-    if (type === 'IN') {
-      new_stock = currentStock + qty;
-    } else if (type === 'OUT') {
-      if (currentStock < qty) {
-        await connection.rollback();
-        return res.status(400).json({
-          success: false,
-          message: `Cannot approve — insufficient stock. Current: ${currentStock}, Requested: ${qty}`
-        });
-      }
-      new_stock = currentStock - qty;
-    } else {
-      new_stock = qty;
-    }
-
-    // Apply stock change
-    await connection.execute(
-      'UPDATE plants SET current_stock = ? WHERE plant_id = ?',
-      [new_stock, movement.plant_id]
+    // Use StockService for atomic update and audit trail
+    const result = await stockService.updateStock(
+      movement.plant_id,
+      movement.quantity,
+      movement.movement_type,
+      approver_id,
+      movement.notes,
+      connection,
+      id
     );
 
-    // Update movement record with final values
-    await connection.execute(
-      `UPDATE stock_movements 
-       SET approval_status = 'approved', approved_by = ?, approved_at = NOW(), 
-           previous_stock = ?, new_stock = ?
-       WHERE movement_id = ?`,
-      [approver_id, currentStock, new_stock, id]
-    );
+    const new_stock = result.newStock;
 
     // Activity log
     await connection.execute(
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
        VALUES (?, ?, ?, ?, ?)`,
       [approver_id, 'STOCK_APPROVED', 'stock_movements', id,
-        `Approved ${type.toLowerCase()} of ${qty} for ${movement.plant_name} (${currentStock} → ${new_stock})`]
+        `Approved ${movement.movement_type.toLowerCase()} of ${movement.quantity} for ${movement.plant_name} (final stock: ${new_stock})`]
     );
 
     // Notify the requester
@@ -350,7 +339,7 @@ const approveMovement = async (req, res) => {
       await createNotification(
         movement.created_by,
         'Stock Movement Approved',
-        `Your ${type.toLowerCase()} of ${qty} for "${movement.plant_name}" was approved by ${req.user.username}.`,
+        `Your ${movement.movement_type.toLowerCase()} of ${movement.quantity} for "${movement.plant_name}" was approved by ${req.user.username}.`,
         'approval'
       );
     }

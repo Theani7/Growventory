@@ -12,7 +12,7 @@ class StockService {
    * @param {string} reason - Reason for the stock movement
    * @param {object} connection - Optional existing DB connection for transaction chaining
    */
-  async updateStock(plantId, quantity, type, userId, reason, connection = null) {
+  async updateStock(plantId, quantity, type, userId, reason, connection = null, existingMovementId = null) {
     const conn = connection || await pool.getConnection();
     if (!connection) await conn.beginTransaction();
 
@@ -26,7 +26,18 @@ class StockService {
       if (plants.length === 0) throw new Error('Plant not found');
       
       const oldStock = plants[0].current_stock;
-      const newStock = type === 'IN' ? oldStock + quantity : oldStock - quantity;
+      let movementId;
+      
+      let newStock;
+      if (type === 'IN') {
+        newStock = oldStock + quantity;
+      } else if (type === 'OUT') {
+        newStock = oldStock - quantity;
+      } else if (type === 'ADJUSTMENT') {
+        newStock = quantity; // quantity represents the new absolute value
+      } else {
+        throw new Error('Invalid movement type');
+      }
 
       if (newStock < 0) throw new Error('Insufficient stock');
 
@@ -37,16 +48,26 @@ class StockService {
       );
 
       // 3. Record movement in stock_movements (Audit Trail)
-      // Auto-approved since it's an immediate stock update through the service
-      await conn.execute(
-        `INSERT INTO stock_movements 
-         (plant_id, created_by, quantity, movement_type, notes, approval_status, approved_by, approved_at, previous_stock, new_stock) 
-         VALUES (?, ?, ?, ?, ?, 'approved', ?, NOW(), ?, ?)`,
-        [plantId, userId, quantity, type, reason, userId, oldStock, newStock]
-      );
+      if (existingMovementId) {
+        await conn.execute(
+          `UPDATE stock_movements 
+           SET approval_status = 'approved', approved_by = ?, approved_at = NOW(), 
+               previous_stock = ?, new_stock = ?, notes = ?
+           WHERE movement_id = ?`,
+          [userId, oldStock, newStock, reason, existingMovementId]
+        );
+      } else {
+        const [insertResult] = await conn.execute(
+          `INSERT INTO stock_movements 
+           (plant_id, created_by, quantity, movement_type, notes, approval_status, approved_by, approved_at, previous_stock, new_stock) 
+           VALUES (?, ?, ?, ?, ?, 'approved', ?, NOW(), ?, ?)`,
+          [plantId, userId, quantity, type, reason, userId, oldStock, newStock]
+        );
+        movementId = insertResult.insertId;
+      }
 
       if (!connection) await conn.commit();
-      return { success: true, newStock };
+      return { success: true, newStock, movementId: existingMovementId || movementId };
     } catch (error) {
       if (!connection) await conn.rollback();
       throw error;
