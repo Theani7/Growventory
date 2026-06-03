@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, LogOut, Menu, Search, User, Settings, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, User, Settings, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -20,7 +20,7 @@ const pageTitles = {
 };
 
 const Navbar = ({ onMenuClick }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, resetDemo, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -150,9 +150,17 @@ const Navbar = ({ onMenuClick }) => {
             </button>
 
             {/* Page title (mobile) / Search (desktop) */}
-            <h2 className="lg:hidden font-bold text-ink-900 text-lg font-display tracking-tight truncate">
-              {currentTitle}
-            </h2>
+            <div className="lg:hidden flex items-center gap-2">
+              <h2 className="font-bold text-ink-900 text-lg font-display tracking-tight truncate">
+                {currentTitle}
+              </h2>
+              {isDemoMode && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                  <Sparkles className="w-3 h-3" />
+                  Demo
+                </span>
+              )}
+            </div>
 
             <div className="hidden lg:block flex-1 max-w-md">
               <div className="relative group">
@@ -227,6 +235,18 @@ const Navbar = ({ onMenuClick }) => {
                           <Settings className="w-4 h-4" />
                           Settings
                         </button>
+                      )}
+                      {isDemoMode && (
+                        <>
+                          <div className="my-1 mx-2 h-px bg-ink-100" />
+                          <button
+                            onClick={() => { resetDemo(); setProfileOpen(false); navigate('/demo'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Reset Demo
+                          </button>
+                        </>
                       )}
                       <div className="my-1 mx-2 h-px bg-ink-100" />
                       <button

@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import RoleGuard from './components/RoleGuard';
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
+import DemoLogin from './pages/DemoLogin';
 import Register from './pages/auth/Register';
 import DashboardLayout from './components/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
@@ -60,6 +61,7 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/demo" element={<DemoLogin />} />
           <Route path="/register" element={<Register />} />
 
           {/* Protected dashboard routes */}

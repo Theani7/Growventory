@@ -50,6 +50,11 @@ const initTables = async () => {
     await conn.execute(`ALTER TABLE stock_movements ADD COLUMN approved_at TIMESTAMP NULL`);
   } catch (e) {}
 
+  // Ensure is_active exists for soft-delete
+  try {
+    await conn.execute(`ALTER TABLE plants ADD COLUMN is_active BOOLEAN DEFAULT TRUE`);
+  } catch (e) {}
+
   await conn.execute(`CREATE TABLE IF NOT EXISTS plant_health_logs (
     log_id INT AUTO_INCREMENT PRIMARY KEY, plant_id INT, health_status ENUM('healthy','under_observation','poor','critical'),
     growth_stage VARCHAR(50), notes TEXT, checked_by INT, check_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

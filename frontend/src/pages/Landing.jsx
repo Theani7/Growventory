@@ -31,6 +31,9 @@ const Landing = () => {
               <a href="#about" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">About</a>
             </div>
             <div className="flex items-center gap-2">
+              <Link to="/demo" className="btn-ghost text-purple-700 hover:text-purple-800 hover:bg-purple-50">
+                Try Demo
+              </Link>
               <Link to="/login" className="btn-ghost">Sign in</Link>
               <Link to="/register" className="btn-primary">
                 Get started
