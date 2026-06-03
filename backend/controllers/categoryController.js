@@ -145,19 +145,25 @@ const deleteCategory = async (req, res) => {
     }
 
     // Check if category has active plants
-    const [plants] = await pool.execute(
+    const [activePlants] = await pool.execute(
       'SELECT COUNT(*) as count FROM plants WHERE category_id = ? AND is_active = 1',
       [id]
     );
 
-    if (plants[0].count > 0) {
+    if (activePlants[0].count > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category. ${plants[0].count} plant(s) assigned to this category.`
+        message: `Cannot delete category. ${activePlants[0].count} active plant(s) assigned to this category.`
       });
     }
 
     const categoryName = existing[0].category_name;
+
+    // Set category_id to NULL for any inactive plants to satisfy foreign key constraint
+    await pool.execute(
+      'UPDATE plants SET category_id = NULL WHERE category_id = ?',
+      [id]
+    );
 
     await pool.execute('DELETE FROM categories WHERE category_id = ?', [id]);
 
