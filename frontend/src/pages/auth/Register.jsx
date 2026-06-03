@@ -172,9 +172,7 @@ const Register = () => {
         {/* Top nav */}
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 bg-forest-700 rounded-xl flex items-center justify-center group-hover:bg-forest-800 transition-colors">
-              <Leaf className="w-5 h-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
             <span className="font-bold text-lg text-gray-900 tracking-tight">Growventory</span>
           </Link>
           <Link to="/" className="hidden sm:flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors">

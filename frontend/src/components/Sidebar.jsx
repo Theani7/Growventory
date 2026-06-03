@@ -14,7 +14,7 @@ const Sidebar = ({ onClose, collapsed = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const mainNav = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true, roles: ['admin', 'supervisor', 'staff'] },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true, roles: ['admin', 'supervisor', 'staff', 'auditor'] },
     { path: '/dashboard/plants', icon: Sprout, label: 'Plants', roles: ['admin', 'supervisor', 'staff'] },
     { path: '/dashboard/categories', icon: FolderTree, label: 'Categories', roles: ['admin', 'supervisor', 'staff'] },
     { path: '/dashboard/stock', icon: ArrowLeftRight, label: 'Stock', roles: ['admin', 'supervisor', 'staff'] },
@@ -76,9 +76,7 @@ const Sidebar = ({ onClose, collapsed = false }) => {
       {/* Logo */}
       <div className={`px-5 py-5 ${collapsed ? 'px-3' : ''}`}>
         <NavLink to="/dashboard" className="flex items-center gap-3 group" onClick={onClose}>
-          <div className="w-10 h-10 bg-gradient-to-br from-moss-500 via-moss-600 to-accent-teal rounded-xl flex items-center justify-center shadow-lg shadow-moss-600/20 flex-shrink-0">
-            <Leaf className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
+          <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain flex-shrink-0" />
           {!collapsed && (
             <div className="min-w-0">
               <h1 className="font-extrabold text-base text-ink-900 tracking-tight font-display leading-none">Growventory</h1>

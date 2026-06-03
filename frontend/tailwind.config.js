@@ -89,6 +89,7 @@ export default {
         'slide-up': 'slideUp 0.4s ease-out',
         'slide-down': 'slideDown 0.3s ease-out',
         'shimmer': 'shimmer 2.5s linear infinite',
+        'shrink': 'shrink 6s linear forwards',
       },
       keyframes: {
         fadeIn: {
@@ -106,6 +107,10 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' },
+        },
+        shrink: {
+          '0%': { transform: 'scaleX(1)' },
+          '100%': { transform: 'scaleX(0)' },
         },
       },
       backgroundImage: {

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Users as UsersIcon, Plus, Edit, Trash2, Power, Key, X, Search, Shield, CheckCircle2, XCircle, Clock, UserPlus } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const Users = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,13 @@ const Users = () => {
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  // Delete confirmation modal
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Password reset modal
+  const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
 
   const [formData, setFormData] = useState({
     username: '', email: '', password: '', full_name: '', phone: '', role_id: 2, is_active: true,
@@ -110,6 +119,10 @@ const Users = () => {
   };
 
   const handleToggleActive = async (id) => {
+    if (currentUser?.user_id === id) {
+      toast.error('You cannot disable your own account');
+      return;
+    }
     try {
       await api.patch(`/users/${id}/toggle-active`);
       toast.success('Status toggled');
@@ -120,10 +133,15 @@ const Users = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this user?')) return;
+    if (currentUser?.user_id === id) {
+      toast.error('You cannot delete your own account');
+      setDeleteTarget(null);
+      return;
+    }
     try {
       await api.delete(`/users/${id}`);
       toast.success('User deleted');
+      setDeleteTarget(null);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed');
@@ -131,13 +149,17 @@ const Users = () => {
   };
 
   const handleResetPassword = async (id) => {
-    const newPassword = prompt('Enter new password (min 6 chars):');
-    if (!newPassword) return;
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     try {
       await api.patch(`/users/${id}/reset-password`, { new_password: newPassword });
-      toast.success('Password reset');
+      toast.success('Password reset successfully');
+      setResetPasswordTarget(null);
+      setNewPassword('');
     } catch (error) {
-      toast.error('Failed');
+      toast.error(error.response?.data?.message || 'Failed to reset password');
     }
   };
 
@@ -344,9 +366,23 @@ const Users = () => {
                               ) : (
                                 <>
                                   <button onClick={() => openModal(u)} className="btn-icon min-h-[36px] min-w-[36px]" title="Edit"><Edit className="w-4 h-4" /></button>
-                                  <button onClick={() => handleResetPassword(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px]" title="Reset password"><Key className="w-4 h-4" /></button>
-                                  <button onClick={() => handleToggleActive(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px]" title="Toggle status"><Power className="w-4 h-4" /></button>
-                                  <button onClick={() => handleDelete(u.user_id)} className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                                  <button onClick={() => { setResetPasswordTarget(u); setNewPassword(''); }} className="btn-icon min-h-[36px] min-w-[36px]" title="Reset password"><Key className="w-4 h-4" /></button>
+                                  <button 
+                                    onClick={() => handleToggleActive(u.user_id)} 
+                                    disabled={currentUser?.user_id === u.user_id}
+                                    className="btn-icon min-h-[36px] min-w-[36px] disabled:opacity-40 disabled:cursor-not-allowed" 
+                                    title={currentUser?.user_id === u.user_id ? "Cannot disable your own account" : "Toggle status"}
+                                  >
+                                    <Power className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => setDeleteTarget(u)} 
+                                    disabled={currentUser?.user_id === u.user_id}
+                                    className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:!text-ink-600 disabled:hover:!bg-transparent" 
+                                    title={currentUser?.user_id === u.user_id ? "Cannot delete your own account" : "Delete"}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 </>
                               )}
                             </div>
@@ -530,6 +566,98 @@ const Users = () => {
                   className="btn-danger"
                 >
                   {actioning === rejectTarget.user_id ? 'Rejecting...' : 'Reject Registration'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Delete User</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 rounded-xl p-4 ring-1 ring-red-100">
+                <p className="font-bold text-ink-900">{deleteTarget.username}</p>
+                <p className="text-sm text-ink-600">{deleteTarget.email}</p>
+                {deleteTarget.full_name && <p className="text-sm text-ink-500">{deleteTarget.full_name}</p>}
+              </div>
+              <div className="bg-amber-50 rounded-xl p-4 ring-1 ring-amber-200">
+                <p className="text-sm text-amber-800 font-semibold">⚠️ Warning</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Deleting this user will permanently remove all their data and activity. This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
+                <button
+                  onClick={() => handleDelete(deleteTarget.user_id)}
+                  className="btn-danger"
+                >
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Modal */}
+      {resetPasswordTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-moss-50 ring-1 ring-moss-100 rounded-xl flex items-center justify-center">
+                  <Key className="w-5 h-5 text-moss-700" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Reset Password</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">Set a new password for this user</p>
+                </div>
+              </div>
+              <button onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-ink-50 rounded-xl p-4">
+                <p className="font-bold text-ink-900">{resetPasswordTarget.username}</p>
+                <p className="text-sm text-ink-600">{resetPasswordTarget.email}</p>
+                {resetPasswordTarget.full_name && <p className="text-sm text-ink-500">{resetPasswordTarget.full_name}</p>}
+              </div>
+              <div>
+                <label className="label">New Password *</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="Enter new password (min 6 characters)"
+                  minLength={6}
+                  autoFocus
+                />
+                <p className="text-xs text-ink-500 mt-1.5">The user will need to use this password to log in.</p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-secondary">Cancel</button>
+                <button
+                  onClick={() => handleResetPassword(resetPasswordTarget.user_id)}
+                  disabled={!newPassword || newPassword.length < 6}
+                  className="btn-primary"
+                >
+                  Reset Password
                 </button>
               </div>
             </div>

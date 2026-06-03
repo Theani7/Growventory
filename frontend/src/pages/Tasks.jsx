@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const Tasks = () => {
   const { user } = useAuth();
-  const isManager = ['admin', 'supervisor'].includes(user?.role_name);
+  const isManager = user?.role_name === 'admin';
   
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -14,6 +14,7 @@ const Tasks = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '', description: '', assigned_to: '', priority: 'medium', due_date: '', status: 'pending',
@@ -82,21 +83,21 @@ const Tasks = () => {
     }
   };
 
-  const handleStatusChange = async (id, status) => {
-    try {
-      await api.patch(`/tasks/${id}/status`, { status });
-      toast.success('Status updated');
-      fetchTasks();
-    } catch (error) {
-      toast.error('Failed');
-    }
-  };
+   const handleStatusChange = async (id, status) => {
+     try {
+       await api.patch(`/tasks/${id}/status`, { status });
+       toast.success('Status updated');
+       fetchTasks();
+     } catch (error) {
+       toast.error(error.response?.data?.message || 'Failed to update status');
+     }
+   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this task?')) return;
     try {
       await api.delete(`/tasks/${id}`);
       toast.success('Task deleted');
+      setDeleteTarget(null);
       fetchTasks();
     } catch (error) {
       toast.error('Failed');
@@ -222,7 +223,7 @@ const Tasks = () => {
                       {isManager && (
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => openModal(task)} className="btn-icon"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(task.task_id)} className="btn-icon hover:!text-red-600 hover:!bg-red-50"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => setDeleteTarget(task)} className="btn-icon hover:!text-red-600 hover:!bg-red-50"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       )}
                     </div>
@@ -318,6 +319,37 @@ const Tasks = () => {
                 <button type="submit" className="btn-primary flex-1">{editingTask ? 'Update' : 'Create'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Delete Task</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 rounded-xl p-4 ring-1 ring-red-100">
+                <p className="font-bold text-ink-900">{deleteTarget.title}</p>
+                {deleteTarget.description && <p className="text-sm text-ink-600 mt-0.5 line-clamp-2">{deleteTarget.description}</p>}
+              </div>
+              <p className="text-sm text-ink-600">Are you sure you want to delete this task?</p>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget.task_id)} className="btn-danger">Delete Task</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

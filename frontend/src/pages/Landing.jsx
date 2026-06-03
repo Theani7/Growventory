@@ -22,9 +22,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-forest-700 rounded-xl flex items-center justify-center">
-                <Leaf className="w-5 h-5 text-white" />
-              </div>
+              <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
               <span className="font-bold text-lg text-gray-900 tracking-tight">Growventory</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
@@ -54,26 +52,15 @@ const Landing = () => {
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
         <div className="max-w-6xl mx-auto text-center relative">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-[1.05]">
-            The modern OS for{' '}
-            <span className="relative inline-block">
-              <span className="bg-gradient-to-r from-forest-600 via-emerald-500 to-forest-700 bg-clip-text text-transparent">
-                nurseries
-              </span>
-              <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-                <path d="M2 9C70 4 145 1 298 7" stroke="url(#g1)" strokeWidth="3" strokeLinecap="round"/>
-                <defs>
-                  <linearGradient id="g1" x1="0" y1="0" x2="300" y2="0">
-                    <stop stopColor="#10b981"/>
-                    <stop offset="1" stopColor="#166534"/>
-                  </linearGradient>
-                </defs>
-              </svg>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-[1.15]">
+            Smart Nursery Management{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-forest-600 to-emerald-700">
+              Powered by Cloud Intelligence
             </span>
           </h1>
 
           <p className="mt-8 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            Track plants, monitor health, manage stock, and grow your business — all in one beautifully designed platform.
+            Monitor plant inventory, track stock levels, monitor plant health, and streamline nursery operations through a centralized cloud platform.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -89,15 +76,15 @@ const Landing = () => {
           <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-500">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-forest-600" />
-              Open source
+              Real-Time Inventory Tracking
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-forest-600" />
-              Self-hosted
+              Plant Health Monitoring
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-forest-600" />
-              Easy setup
+              Cloud-Based Data Management
             </span>
           </div>
 
@@ -164,19 +151,38 @@ const Landing = () => {
       </section>
 
       {/* Stats bar */}
-      <section className="py-12 px-6 lg:px-8 bg-gradient-to-r from-forest-700 to-forest-800">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-          {[
-            { value: '4', label: 'User roles' },
-            { value: '8+', label: 'Modules' },
-            { value: '100%', label: 'Open source' },
-            { value: 'Web', label: 'Anywhere access' },
-          ].map((s, i) => (
-            <div key={i}>
-              <div className="text-3xl lg:text-4xl font-bold text-white">{s.value}</div>
-              <div className="text-sm text-forest-200 mt-1">{s.label}</div>
+      <section className="py-16 px-6 lg:px-8 bg-gradient-to-r from-forest-700 to-forest-800">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
+              <Users className="w-6 h-6 text-white" />
             </div>
-          ))}
+            <div className="text-3xl lg:text-4xl font-bold text-white">4</div>
+            <div className="text-sm text-forest-200 mt-1">User Roles</div>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
+              <Boxes className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-3xl lg:text-4xl font-bold text-white">8+</div>
+            <div className="text-sm text-forest-200 mt-1">Management Modules</div>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+            </div>
+            <div className="text-3xl lg:text-4xl font-bold text-white">Cloud</div>
+            <div className="text-sm text-forest-200 mt-1">Cloud-Based Platform</div>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-3xl lg:text-4xl font-bold text-white">Real-Time</div>
+            <div className="text-sm text-forest-200 mt-1">Analytics</div>
+          </div>
         </div>
       </section>
 
@@ -336,9 +342,7 @@ const Landing = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 bg-forest-700 rounded-xl flex items-center justify-center">
-                  <Leaf className="w-5 h-5 text-white" />
-                </div>
+                <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
                 <span className="font-bold text-lg text-white">Growventory</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">
@@ -366,10 +370,16 @@ const Landing = () => {
             <p className="text-gray-500 text-sm">
               © {new Date().getFullYear()} Growventory. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              {['Twitter', 'GitHub', 'LinkedIn'].map((social) => (
-                <a key={social} href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{social}</a>
-              ))}
+            <div className="flex items-center gap-3">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>
+              </a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.137 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </a>
             </div>
           </div>
         </div>

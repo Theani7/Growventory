@@ -48,9 +48,7 @@ const Login = () => {
         {/* Top nav */}
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 bg-forest-700 rounded-xl flex items-center justify-center group-hover:bg-forest-800 transition-colors">
-              <Leaf className="w-5 h-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
             <span className="font-bold text-lg text-gray-900 tracking-tight">Growventory</span>
           </Link>
           <Link to="/" className="hidden sm:flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors">
@@ -206,9 +204,7 @@ const Login = () => {
             <div className="mb-12">
               <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-forest-600 rounded-xl flex items-center justify-center">
-                    <Leaf className="w-5 h-5 text-white" />
-                  </div>
+                  <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
                   <div>
                     <p className="text-white font-semibold text-sm">Inventory Update</p>
                     <p className="text-forest-200 text-xs">2 minutes ago</p>
