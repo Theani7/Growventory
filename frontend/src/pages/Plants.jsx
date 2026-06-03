@@ -32,7 +32,16 @@ const Plants = () => {
   const [formData, setFormData] = useState({
     name: '', scientific_name: '', category_id: '', current_stock: 0,
     min_stock_threshold: 0, purchase_price: '', selling_price: '', location: '', description: '', image: null,
+    imagePreview: null
   });
+
+  useEffect(() => {
+    return () => {
+      if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.imagePreview);
+      }
+    };
+  }, [formData.imagePreview]);
 
   useEffect(() => { fetchPlants(); fetchCategories(); }, []);
 
@@ -82,7 +91,7 @@ const Plants = () => {
     setSubmitting(true);
     const form = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null && value !== '') form.append(key, value);
+      if (key !== 'imagePreview' && value !== null && value !== '') form.append(key, value);
     });
     try {
       if (editingPlant) {
@@ -114,9 +123,13 @@ const Plants = () => {
   };
 
   const resetForm = () => {
+    if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(formData.imagePreview);
+    }
     setFormData({
       name: '', scientific_name: '', category_id: '', current_stock: 0,
       min_stock_threshold: 0, purchase_price: '', selling_price: '', location: '', description: '', image: null,
+      imagePreview: null
     });
     setEditingPlant(null);
   };
@@ -183,6 +196,7 @@ const Plants = () => {
       location: plant.location || '',
       description: plant.description || '',
       image: null,
+      imagePreview: plant.image_url ? `${API_HOST}${plant.image_url}` : null
     });
     setShowModal(true);
   };
@@ -587,45 +601,67 @@ const Plants = () => {
               </div>
               <div>
                 <label className="label">Image</label>
-                <label className="cursor-pointer flex items-center gap-3 px-4 py-3 ring-1 ring-dashed ring-ink-300 rounded-xl hover:ring-ink-900 hover:bg-ink-50 transition min-h-[44px]">
-                  <ImageIcon className="w-5 h-5 text-ink-400" />
-                  <span className="text-sm text-ink-600 flex-1 truncate">
-                    {formData.image ? formData.image.name : 'Click to upload image (JPG, PNG, WEBP, GIF — max 5MB)'}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                      if (!allowed.includes(file.type)) {
-                        toast.error('Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed.');
-                        e.target.value = '';
-                        return;
-                      }
-                      if (file.size > 5 * 1024 * 1024) {
-                        toast.error('Image too large. Maximum size is 5MB.');
-                        e.target.value = '';
-                        return;
-                      }
-                      setFormData({ ...formData, image: file });
-                    }}
-                    className="hidden"
-                  />
-                </label>
-                {formData.image && (
-                  <div className="mt-2 flex items-center justify-between text-xs text-ink-500 px-1">
-                    <span>{(formData.image.size / 1024).toFixed(1)} KB</span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, image: null })}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
+                <div className="space-y-3">
+                  {formData.imagePreview && (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-ink-50 ring-1 ring-ink-100 group">
+                      <img
+                        src={formData.imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+                            URL.revokeObjectURL(formData.imagePreview);
+                          }
+                          setFormData({ ...formData, image: null, imagePreview: null });
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  <label className="cursor-pointer flex items-center gap-3 px-4 py-3 ring-1 ring-dashed ring-ink-300 rounded-xl hover:ring-ink-900 hover:bg-ink-50 transition min-h-[44px]">
+                    <ImageIcon className="w-5 h-5 text-ink-400" />
+                    <span className="text-sm text-ink-600 flex-1 truncate">
+                      {formData.image ? formData.image.name : 'Click to upload image (JPG, PNG, WEBP, GIF — max 5MB)'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                        if (!allowed.includes(file.type)) {
+                          toast.error('Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed.');
+                          e.target.value = '';
+                          return;
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('Image too large. Maximum size is 5MB.');
+                          e.target.value = '';
+                          return;
+                        }
+                        
+                        // Clean up old preview if it was a blob
+                        if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+                          URL.revokeObjectURL(formData.imagePreview);
+                        }
+                        
+                        setFormData({
+                          ...formData,
+                          image: file,
+                          imagePreview: URL.createObjectURL(file)
+                        });
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </form>
             <div className="flex flex-col sm:flex-row gap-3 justify-end p-4 sm:p-5 border-t border-ink-100 bg-ink-50/40">
