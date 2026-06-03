@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 /**
  * Restricts a route to specific roles.
- * If user role is not in `allowedRoles`, redirects to `redirectTo` (default: /dashboard/reports for auditor, /dashboard otherwise).
+ * If user role is not in `allowedRoles`, redirects to `redirectTo` (default: /dashboard).
  */
 const RoleGuard = ({ allowedRoles, children, redirectTo }) => {
   const { user } = useAuth();
@@ -12,8 +12,8 @@ const RoleGuard = ({ allowedRoles, children, redirectTo }) => {
   if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    // Auditors land on /dashboard/reports; everyone else on /dashboard
-    const fallback = redirectTo || (role === 'auditor' ? '/dashboard/reports' : '/dashboard');
+    // Everyone lands on /dashboard
+    const fallback = redirectTo || '/dashboard';
     return <Navigate to={fallback} replace />;
   }
 

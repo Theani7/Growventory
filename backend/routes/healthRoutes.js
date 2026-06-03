@@ -13,7 +13,7 @@ router.get('/logs', getAllHealthLogs);
 router.get('/logs/:id', getHealthLogById);
 
 // POST /api/health/logs - Create health log (Staff, Supervisor, Admin)
-router.post('/logs', authorize('staff', 'supervisor', 'admin'), createHealthLog);
+router.post('/logs', authorize('staff', 'admin'), createHealthLog);
 
 // PUT /api/health/logs/:id - Update health log (Admin, Supervisor)
 router.put('/logs/:id', authorize('admin', 'supervisor'), updateHealthLog);

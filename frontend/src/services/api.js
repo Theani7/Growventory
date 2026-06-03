@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { getMockResponse } from './mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -54,14 +55,19 @@ api.interceptors.response.use(
       });
     }
 
-    // Only redirect to login if user was already authenticated (token expired)
-    // Don't redirect on login failures
+    // Handle 401 Unauthorized
     const isLoginRequest = error.config?.url?.includes('/auth/login');
     if (error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    
+    // Handle 500+ Server Errors
+    if (error.response?.status >= 500) {
+      toast.error('Server error. Please try again later.');
+    }
+    
     return Promise.reject(error);
   }
 );

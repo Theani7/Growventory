@@ -20,12 +20,8 @@ import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
 import Logs from './pages/Logs';
 
-// Auditors land on Reports; everyone else on the standard Overview
+// Everyone lands on the standard Overview
 const DashboardIndex = () => {
-  const { user } = useAuth();
-  if (user?.role_name === 'auditor') {
-    return <Navigate to="/dashboard/reports" replace />;
-  }
   return <DashboardHome />;
 };
 

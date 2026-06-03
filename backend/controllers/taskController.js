@@ -86,15 +86,24 @@ const updateTaskStatus = async (req, res) => {
 
     // Verify access
     const [tasks] = await pool.execute(
-      'SELECT t.*, u.username as assignee_name FROM tasks t LEFT JOIN users u ON t.assigned_to = u.user_id WHERE t.task_id = ?',
+      'SELECT t.*, u.username as assignee_name, u2.username as assigner_name FROM tasks t LEFT JOIN users u ON t.assigned_to = u.user_id LEFT JOIN users u2 ON t.assigned_by = u2.user_id WHERE t.task_id = ?',
       [id]
     );
     if (tasks.length === 0) return res.status(404).json({ success: false, message: 'Task not found.' });
-
+    
     const task = tasks[0];
     const isOwner = task.assigned_to === req.user.user_id;
+    const isAssigner = task.assigned_by === req.user.user_id;
+    const isAdmin = req.user.role_name === 'admin';
+    
+    // Prevent unchecking completed tasks unless you're the owner, assigner, or admin
+    if (task.status === 'completed' && req.body.status !== 'completed' && !isOwner && !isAssigner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Only the task assignee, assigner, or admin can change a completed task.' });
+    }
+    
+    // General access check: owner, assigner, admin, or supervisor can update tasks
     const isManager = ['admin', 'supervisor'].includes(req.user.role_name);
-    if (!isOwner && !isManager) {
+    if (!isOwner && !isAssigner && !isAdmin && !isManager) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 

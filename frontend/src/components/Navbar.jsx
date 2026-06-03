@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, LogOut, Menu, Search, User, Settings, AlertTriangle, Heart, Info, Command, Sparkles } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, User, Settings, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -31,37 +31,41 @@ const Navbar = ({ onMenuClick }) => {
 
   const showNotificationToast = (notif) => {
     const meta = {
-      low_stock: { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
-      health_issue: { icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50' },
-      system: { icon: Info, color: 'text-blue-600', bg: 'bg-blue-50' },
-      task: { icon: Info, color: 'text-purple-600', bg: 'bg-purple-50' },
-      approval: { icon: Info, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      low_stock: { icon: AlertTriangle, bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-100', label: 'Low Stock' },
+      health_issue: { icon: Heart, bg: 'bg-rose-50', text: 'text-rose-700', ring: 'ring-rose-100', label: 'Health' },
+      system: { icon: Info, bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-100', label: 'System' },
+      task: { icon: ListTodo, bg: 'bg-purple-50', text: 'text-purple-700', ring: 'ring-purple-100', label: 'Task' },
+      approval: { icon: UserCheck, bg: 'bg-indigo-50', text: 'text-indigo-700', ring: 'ring-indigo-100', label: 'Approval' },
     };
     const m = meta[notif.type] || meta.system;
     const Icon = m.icon;
 
     toast.custom((t) => (
       <div
-        className={`${t.visible ? 'animate-slide-up' : 'opacity-0'} max-w-md w-full bg-white shadow-elevated-lg rounded-2xl pointer-events-auto flex overflow-hidden cursor-pointer hover:shadow-elevated-lg transition-shadow ring-1 ring-ink-100`}
+        className={`${t.visible ? 'animate-slide-up' : 'opacity-0'} max-w-sm w-full bg-white shadow-elevated-lg rounded-2xl pointer-events-auto overflow-hidden cursor-pointer hover:shadow-elevated-lg transition-shadow ring-1 ring-ink-100`}
         onClick={() => {
           toast.dismiss(t.id);
           navigate('/dashboard/notifications');
         }}
       >
-        <div className={`flex-shrink-0 w-12 ${m.bg} flex items-center justify-center`}>
-          <Icon className={`w-5 h-5 ${m.color}`} />
+        <div className="flex items-start gap-3.5 p-4">
+          <div className={`w-10 h-10 rounded-xl ${m.bg} ${m.text} ring-1 ${m.ring} flex items-center justify-center flex-shrink-0`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-ink-900">{notif.title}</p>
+              <span className="chip text-[10px] py-0">{m.label}</span>
+            </div>
+            <p className="text-xs text-ink-600 mt-0.5 line-clamp-2">{notif.message}</p>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
+            className="flex-shrink-0 w-7 h-7 rounded-lg bg-ink-50 hover:bg-ink-100 text-ink-400 hover:text-ink-600 flex items-center justify-center transition-all -mr-1 -mt-1"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <div className="flex-1 p-4 min-w-0">
-          <p className="text-sm font-bold text-ink-900">{notif.title}</p>
-          <p className="text-xs text-ink-600 mt-0.5 line-clamp-2">{notif.message}</p>
-          <p className="text-[10px] text-ink-400 mt-1">Click to view all notifications</p>
-        </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
-          className="px-3 text-ink-400 hover:text-ink-600 text-xl"
-        >
-          ×
-        </button>
       </div>
     ), { duration: 6000, position: 'top-right' });
   };
@@ -139,7 +143,7 @@ const Navbar = ({ onMenuClick }) => {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={onMenuClick}
-              className="lg:hidden btn-icon"
+              className="lg:hidden btn-icon min-h-[44px] min-w-[44px]"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -191,6 +195,7 @@ const Navbar = ({ onMenuClick }) => {
               </button>
             )}
 
+            {/* Desktop user info */}
             <div className="hidden sm:flex items-center gap-3 pl-2 ml-1">
               <div className="text-right">
                 <p className="text-sm font-bold text-ink-900 leading-tight">{user?.username}</p>
@@ -255,6 +260,55 @@ const Navbar = ({ onMenuClick }) => {
                   </>
                 )}
               </div>
+            </div>
+
+            {/* Mobile user menu */}
+            <div className="sm:hidden relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-9 h-9 bg-gradient-to-br from-moss-500 to-accent-teal rounded-xl flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md ring-2 ring-white"
+                aria-label="User menu"
+              >
+                {user?.username?.charAt(0).toUpperCase()}
+              </button>
+
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-elevated-lg ring-1 ring-ink-100 py-1 z-20 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-ink-100">
+                      <p className="text-sm font-bold text-ink-900 truncate">{user?.username}</p>
+                      <p className="text-xs text-ink-500 truncate">{user?.email}</p>
+                      <span className={`${getRoleBadge(user?.role_name)} mt-1.5 capitalize text-[10px] py-0.5`}>
+                        {user?.role_name}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    {user?.role_name === 'admin' && (
+                      <button
+                        onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </button>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

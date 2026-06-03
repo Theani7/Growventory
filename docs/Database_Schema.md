@@ -7,6 +7,7 @@ Users ──< Stock_Movements
 Users ──< Plant_Health_Logs
 Users ──< Activity_Logs
 Users ──< Notifications
+Users ──< Tasks
 Users >── Roles
 
 Categories ──< Plants
@@ -82,6 +83,9 @@ Plants ──< Plant_Health_Logs
 | notes | TEXT | Additional notes |
 | created_by | INT FK | Reference to users |
 | movement_date | TIMESTAMP | Movement timestamp |
+| approval_status | ENUM | approved, pending, rejected |
+| approved_by | INT NULL | User ID who approved/rejected |
+| approved_at | TIMESTAMP NULL | Timestamp of approval/rejection |
 
 ### plant_health_logs
 | Column | Type | Description |
@@ -112,9 +116,32 @@ Plants ──< Plant_Health_Logs
 | user_id | INT FK | Reference to users |
 | title | VARCHAR(100) | Notification title |
 | message | TEXT | Notification message |
-| type | ENUM | low_stock, health_issue, system |
+| type | VARCHAR(50) | system, low_stock, health_issue, etc. |
 | is_read | BOOLEAN DEFAULT FALSE | Read status |
 | created_at | TIMESTAMP | Creation timestamp |
+
+### tasks
+| Column | Type | Description |
+|--------|------|-------------|
+| task_id | INT PK AUTO_INCREMENT | Primary key |
+| title | VARCHAR(200) | Task title |
+| description | TEXT | Task details |
+| assigned_to | INT FK | Reference to users |
+| assigned_by | INT FK | Reference to users |
+| priority | ENUM | low, medium, high, urgent |
+| status | ENUM | pending, in_progress, completed, cancelled |
+| due_date | DATE | Expected completion date |
+| completed_at | TIMESTAMP | Actual completion time |
+| created_at | TIMESTAMP | Creation timestamp |
+| updated_at | TIMESTAMP | Update timestamp |
+
+### system_settings
+| Column | Type | Description |
+|--------|------|-------------|
+| setting_id | INT PK AUTO_INCREMENT | Primary key |
+| setting_key | VARCHAR(100) | Unique setting identifier |
+| setting_value | TEXT | Configuration value |
+| updated_at | TIMESTAMP | Last update timestamp |
 
 ---
 
@@ -141,4 +168,6 @@ The database tables are auto-created when the backend server starts. The SQL is 
 2. **Add Plant** → Creates record in plants table, logs to activity_logs
 3. **Stock Movement** → Creates record in stock_movements, updates plants.current_stock
 4. **Health Check** → Creates record in plant_health_logs, updates plants.health_status
+5. **Low Stock/Health Alert** → Creates records in notifications for admin/supervisor users
+eck** → Creates record in plant_health_logs, updates plants.health_status
 5. **Low Stock/Health Alert** → Creates records in notifications for admin/supervisor users

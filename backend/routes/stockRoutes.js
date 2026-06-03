@@ -17,7 +17,7 @@ router.get('/movements', getAllMovements);
 router.get('/movements/:id', getMovementById);
 
 // Create movement (Staff, Supervisor, Admin) — staff submissions may go pending
-router.post('/movements', authorize('staff', 'supervisor', 'admin'), createMovement);
+router.post('/movements', authorize('staff', 'admin', 'supervisor'), createMovement);
 
 // Approve / reject pending movements (Supervisor, Admin only)
 router.patch('/movements/:id/approve', authorize('admin', 'supervisor'), approveMovement);

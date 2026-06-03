@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Plus, HeartPulse, X, Filter, Calendar, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Health = () => {
+  const { user } = useAuth();
+  const canRecord = ['admin', 'staff'].includes(user?.role_name);
   const [logs, setLogs] = useState([]);
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,9 +84,11 @@ const Health = () => {
           <h1 className="page-title mt-1">Plant Health</h1>
           <p className="page-subtitle">Monitor and track plant health status over time</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Record Check
-        </button>
+        {canRecord && (
+          <button onClick={() => setShowModal(true)} className="btn-primary">
+            <Plus className="w-4 h-4" /> Record Check
+          </button>
+        )}
       </div>
 
       {/* Status overview */}
@@ -132,9 +137,11 @@ const Health = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No health logs yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Start tracking plant health by recording your first check.</p>
-          <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
-            <Plus className="w-4 h-4" /> Record Check
-          </button>
+          {canRecord && (
+            <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
+              <Plus className="w-4 h-4" /> Record Check
+            </button>
+          )}
         </div>
       ) : (
         <div className="card overflow-hidden">

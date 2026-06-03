@@ -103,9 +103,9 @@ const createHealthLog = async (req, res) => {
       });
     }
 
-    // Verify plant exists
+    // Verify plant exists and lock the row for update
     const [plants] = await connection.execute(
-      'SELECT plant_id, name, health_status, growth_stage FROM plants WHERE plant_id = ?',
+      'SELECT plant_id, name, health_status, growth_stage FROM plants WHERE plant_id = ? FOR UPDATE',
       [plant_id]
     );
 

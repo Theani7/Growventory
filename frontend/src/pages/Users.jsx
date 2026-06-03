@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Users as UsersIcon, Plus, Edit, Trash2, Power, Key, X, Search, Shield, CheckCircle2, XCircle, Clock, UserPlus } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const Users = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,13 @@ const Users = () => {
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  // Delete confirmation modal
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Password reset modal
+  const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
 
   const [formData, setFormData] = useState({
     username: '', email: '', password: '', full_name: '', phone: '', role_id: 2, is_active: true,
@@ -110,6 +119,10 @@ const Users = () => {
   };
 
   const handleToggleActive = async (id) => {
+    if (currentUser?.user_id === id) {
+      toast.error('You cannot disable your own account');
+      return;
+    }
     try {
       await api.patch(`/users/${id}/toggle-active`);
       toast.success('Status toggled');
@@ -120,10 +133,15 @@ const Users = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this user?')) return;
+    if (currentUser?.user_id === id) {
+      toast.error('You cannot delete your own account');
+      setDeleteTarget(null);
+      return;
+    }
     try {
       await api.delete(`/users/${id}`);
       toast.success('User deleted');
+      setDeleteTarget(null);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed');
@@ -131,13 +149,17 @@ const Users = () => {
   };
 
   const handleResetPassword = async (id) => {
-    const newPassword = prompt('Enter new password (min 6 chars):');
-    if (!newPassword) return;
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     try {
       await api.patch(`/users/${id}/reset-password`, { new_password: newPassword });
-      toast.success('Password reset');
+      toast.success('Password reset successfully');
+      setResetPasswordTarget(null);
+      setNewPassword('');
     } catch (error) {
-      toast.error('Failed');
+      toast.error(error.response?.data?.message || 'Failed to reset password');
     }
   };
 
@@ -266,94 +288,112 @@ const Users = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table-modern">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u) => {
-                  const isPending = u.account_status === 'pending';
-                  return (
-                    <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 ${
-                            isPending
-                              ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                              : 'bg-gradient-to-br from-moss-500 to-accent-teal'
-                          }`}>
-                            {u.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-ink-900 truncate">{u.username}</p>
-                            {u.full_name && <p className="text-xs text-ink-500 truncate">{u.full_name}</p>}
-                            {u.phone && <p className="text-xs text-ink-400 truncate">{u.phone}</p>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-ink-600">{u.email}</td>
-                      <td>
-                        {u.role_name ? (
-                          <span className={`${roleColors[u.role_name] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
-                        ) : (
-                          <span className="text-ink-400 text-sm italic">Not assigned</span>
-                        )}
-                      </td>
-                      <td>
-                        {u.account_status === 'pending' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 text-amber-700 bg-amber-50 ring-amber-200">
-                            <Clock className="w-3 h-3" /> Pending
-                          </span>
-                        )}
-                        {u.account_status === 'active' && <span className="badge-success">Active</span>}
-                        {u.account_status === 'disabled' && <span className="badge-neutral">Disabled</span>}
-                      </td>
-                      <td>
-                        <div className="flex items-center justify-end gap-1">
-                          {isPending ? (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setApproveTarget(u);
-                                  setApproveRoleId(roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || '');
-                                }}
-                                disabled={actioning === u.user_id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition"
-                                title="Approve"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
-                              </button>
-                              <button
-                                onClick={() => { setRejectTarget(u); setRejectReason(''); }}
-                                disabled={actioning === u.user_id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-red-600 ring-1 ring-red-200 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition"
-                                title="Reject"
-                              >
-                                <XCircle className="w-3.5 h-3.5" /> Reject
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={() => openModal(u)} className="btn-icon" title="Edit"><Edit className="w-4 h-4" /></button>
-                              <button onClick={() => handleResetPassword(u.user_id)} className="btn-icon" title="Reset password"><Key className="w-4 h-4" /></button>
-                              <button onClick={() => handleToggleActive(u.user_id)} className="btn-icon" title="Toggle status"><Power className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete(u.user_id)} className="btn-icon hover:!text-red-600 hover:!bg-red-50" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-full inline-block align-middle">
+              <div className="overflow-hidden">
+                <table className="table-modern min-w-full">
+                  <thead>
+                    <tr>
+                      <th className="whitespace-nowrap">User</th>
+                      <th className="whitespace-nowrap">Email</th>
+                      <th className="whitespace-nowrap">Role</th>
+                      <th className="whitespace-nowrap">Status</th>
+                      <th className="whitespace-nowrap text-right">Actions</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {filtered.map((u) => {
+                      const isPending = u.account_status === 'pending';
+                      return (
+                        <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
+                          <td className="whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 ${
+                                isPending
+                                  ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                                  : 'bg-gradient-to-br from-moss-500 to-accent-teal'
+                              }`}>
+                                {u.username.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-ink-900 truncate">{u.username}</p>
+                                {u.full_name && <p className="text-xs text-ink-500 truncate">{u.full_name}</p>}
+                                {u.phone && <p className="text-xs text-ink-400 truncate">{u.phone}</p>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap text-ink-600">{u.email}</td>
+                          <td className="whitespace-nowrap">
+                            {u.role_name ? (
+                              <span className={`${roleColors[u.role_name] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
+                            ) : (
+                              <span className="text-ink-400 text-sm italic">Not assigned</span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap">
+                            {u.account_status === 'pending' && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 text-amber-700 bg-amber-50 ring-amber-200">
+                                <Clock className="w-3 h-3" /> Pending
+                              </span>
+                            )}
+                            {u.account_status === 'active' && <span className="badge-success">Active</span>}
+                            {u.account_status === 'disabled' && <span className="badge-neutral">Disabled</span>}
+                          </td>
+                          <td className="whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {isPending ? (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setApproveTarget(u);
+                                      setApproveRoleId(roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || '');
+                                    }}
+                                    disabled={actioning === u.user_id}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition min-h-[36px]"
+                                    title="Approve"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                                  </button>
+                                  <button
+                                    onClick={() => { setRejectTarget(u); setRejectReason(''); }}
+                                    disabled={actioning === u.user_id}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-red-600 ring-1 ring-red-200 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition min-h-[36px]"
+                                    title="Reject"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" /> Reject
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => openModal(u)} className="btn-icon min-h-[36px] min-w-[36px]" title="Edit"><Edit className="w-4 h-4" /></button>
+                                  <button onClick={() => { setResetPasswordTarget(u); setNewPassword(''); }} className="btn-icon min-h-[36px] min-w-[36px]" title="Reset password"><Key className="w-4 h-4" /></button>
+                                  <button 
+                                    onClick={() => handleToggleActive(u.user_id)} 
+                                    disabled={currentUser?.user_id === u.user_id}
+                                    className="btn-icon min-h-[36px] min-w-[36px] disabled:opacity-40 disabled:cursor-not-allowed" 
+                                    title={currentUser?.user_id === u.user_id ? "Cannot disable your own account" : "Toggle status"}
+                                  >
+                                    <Power className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => setDeleteTarget(u)} 
+                                    disabled={currentUser?.user_id === u.user_id}
+                                    className="btn-icon min-h-[36px] min-w-[36px] hover:!text-red-600 hover:!bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:!text-ink-600 disabled:hover:!bg-transparent" 
+                                    title={currentUser?.user_id === u.user_id ? "Cannot delete your own account" : "Delete"}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -526,6 +566,98 @@ const Users = () => {
                   className="btn-danger"
                 >
                   {actioning === rejectTarget.user_id ? 'Rejecting...' : 'Reject Registration'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Delete User</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 rounded-xl p-4 ring-1 ring-red-100">
+                <p className="font-bold text-ink-900">{deleteTarget.username}</p>
+                <p className="text-sm text-ink-600">{deleteTarget.email}</p>
+                {deleteTarget.full_name && <p className="text-sm text-ink-500">{deleteTarget.full_name}</p>}
+              </div>
+              <div className="bg-amber-50 rounded-xl p-4 ring-1 ring-amber-200">
+                <p className="text-sm text-amber-800 font-semibold">⚠️ Warning</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Deleting this user will permanently remove all their data and activity. This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
+                <button
+                  onClick={() => handleDelete(deleteTarget.user_id)}
+                  className="btn-danger"
+                >
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Modal */}
+      {resetPasswordTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-moss-50 ring-1 ring-moss-100 rounded-xl flex items-center justify-center">
+                  <Key className="w-5 h-5 text-moss-700" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Reset Password</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">Set a new password for this user</p>
+                </div>
+              </div>
+              <button onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-ink-50 rounded-xl p-4">
+                <p className="font-bold text-ink-900">{resetPasswordTarget.username}</p>
+                <p className="text-sm text-ink-600">{resetPasswordTarget.email}</p>
+                {resetPasswordTarget.full_name && <p className="text-sm text-ink-500">{resetPasswordTarget.full_name}</p>}
+              </div>
+              <div>
+                <label className="label">New Password *</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="Enter new password (min 6 characters)"
+                  minLength={6}
+                  autoFocus
+                />
+                <p className="text-xs text-ink-500 mt-1.5">The user will need to use this password to log in.</p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-secondary">Cancel</button>
+                <button
+                  onClick={() => handleResetPassword(resetPasswordTarget.user_id)}
+                  disabled={!newPassword || newPassword.length < 6}
+                  className="btn-primary"
+                >
+                  Reset Password
                 </button>
               </div>
             </div>

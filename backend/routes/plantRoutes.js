@@ -16,11 +16,16 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) return cb(null, true);
-    cb(new Error('Only image files are allowed'));
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedExtensions = /\.(jpeg|jpg|png|gif|webp)$/i;
+
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error(`Invalid file type "${file.mimetype}". Only JPG, PNG, GIF, and WEBP images are allowed.`));
+    }
+    if (!allowedExtensions.test(path.extname(file.originalname))) {
+      return cb(new Error(`Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp are allowed.`));
+    }
+    cb(null, true);
   },
   limits: { fileSize: 5 * 1024 * 1024 }
 });
@@ -39,18 +44,34 @@ const csvUpload = multer({
 
 router.use(authenticate);
 
+// Helper to catch multer errors and return JSON
+const handleUpload = (uploadMiddleware) => (req, res, next) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'File too large. Maximum size is 5MB.' });
+      }
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+};
+
 // View plants - all authenticated (incl. auditor)
 router.get('/', getAllPlants);
 router.get('/:id', getPlantById);
 
 // Create/update - Staff, Supervisor, Admin
-router.post('/', authorize('admin', 'supervisor', 'staff'), upload.single('image'), createPlant);
-router.put('/:id', authorize('admin', 'supervisor', 'staff'), upload.single('image'), updatePlant);
+router.post('/', authorize('admin', 'staff'), handleUpload(upload.single('image')), createPlant);
+router.put('/:id', authorize('admin', 'staff'), handleUpload(upload.single('image')), updatePlant);
 
-// Import plants - Admin, Supervisor
-router.post('/import', authorize('admin', 'supervisor'), csvUpload.single('file'), importPlants);
+// Import plants - Admin only
+router.post('/import', authorize('admin'), handleUpload(csvUpload.single('file')), importPlants);
 
-// Delete - Admin, Supervisor
-router.delete('/:id', authorize('admin', 'supervisor'), deletePlant);
+// Delete - Admin only
+router.delete('/:id', authorize('admin'), deletePlant);
 
 module.exports = router;

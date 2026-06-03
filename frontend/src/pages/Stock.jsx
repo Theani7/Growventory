@@ -22,6 +22,7 @@ const Stock = () => {
   const [actioning, setActioning] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [formData, setFormData] = useState({ plant_id: '', movement_type: 'IN', quantity: '', notes: '' });
 
   useEffect(() => { fetchMovements(); fetchPlants(); }, []);
@@ -104,10 +105,10 @@ const Stock = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this movement? Approved movements will reverse the stock change.')) return;
     try {
       await api.delete(`/stock/movements/${id}`);
       toast.success('Movement deleted');
+      setDeleteTarget(null);
       fetchMovements();
       fetchPlants();
     } catch (error) {
@@ -158,9 +159,11 @@ const Stock = () => {
               <Clock className="w-4 h-4" /> {totals.pending} Pending
             </button>
           )}
-          <button onClick={() => setShowModal(true)} className="btn-primary">
-            <Plus className="w-4 h-4" /> Record Movement
-          </button>
+          {!isApprover || user?.role_name === 'admin' ? (
+            <button onClick={() => setShowModal(true)} className="btn-primary">
+              <Plus className="w-4 h-4" /> Record Movement
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -299,9 +302,11 @@ const Stock = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No movements yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Record your first stock movement.</p>
-          <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
-            <Plus className="w-4 h-4" /> Record Movement
-          </button>
+          {(!isApprover || user?.role_name === 'admin') && (
+            <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
+              <Plus className="w-4 h-4" /> Record Movement
+            </button>
+          )}
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -386,7 +391,7 @@ const Stock = () => {
                           )}
                           {isApprover && (
                             <button
-                              onClick={() => handleDelete(m.movement_id)}
+                              onClick={() => setDeleteTarget(m)}
                               className="btn-icon hover:!text-red-600 hover:!bg-red-50"
                               title="Delete"
                             >
@@ -506,6 +511,41 @@ const Stock = () => {
                 <button onClick={handleReject} disabled={actioning === rejectTarget} className="btn-danger">
                   {actioning === rejectTarget ? 'Rejecting...' : 'Reject Movement'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop flex items-center justify-center p-4">
+          <div className="modal-panel w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-ink-900 font-display">Delete Movement</h2>
+                  <p className="text-xs text-ink-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="btn-icon"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 rounded-xl p-4 ring-1 ring-red-100">
+                <p className="font-bold text-ink-900">{deleteTarget.plant_name}</p>
+                <p className="text-sm text-ink-600">Type: {deleteTarget.movement_type} &nbsp;|&nbsp; Qty: {deleteTarget.quantity}</p>
+                {deleteTarget.notes && <p className="text-sm text-ink-500 mt-0.5">{deleteTarget.notes}</p>}
+              </div>
+              <div className="bg-amber-50 rounded-xl p-4 ring-1 ring-amber-200">
+                <p className="text-sm text-amber-800 font-semibold">⚠️ Warning</p>
+                <p className="text-xs text-amber-700 mt-1">Approved movements will reverse the stock change when deleted.</p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget.movement_id)} className="btn-danger">Delete Movement</button>
               </div>
             </div>
           </div>

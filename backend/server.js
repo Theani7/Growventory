@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { testConnection } = require('./config/db');
 
 // Import routes
@@ -20,7 +22,21 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(helmet());
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Too many login attempts, please try again later.' }
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -47,8 +63,14 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ success: false, message: 'Internal server error.', error: err.message });
+  console.error(`[ERROR] ${new Date().toISOString()}:`, err.stack);
+  
+  const isDev = process.env.NODE_ENV === 'development';
+  res.status(err.status || 500).json({
+    success: false,
+    message: isDev ? err.message : 'Internal Server Error',
+    ...(isDev && { stack: err.stack })
+  });
 });
 
 app.listen(PORT, async () => {
