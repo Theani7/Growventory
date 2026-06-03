@@ -139,14 +139,6 @@ const DashboardHome = () => {
               Here's a snapshot of your nursery operations. Track plants, monitor stock levels, and stay on top of everything.
             </p>
           </div>
-          <button
-            onClick={fetchDashboardData}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur rounded-xl text-xs sm:text-sm font-semibold text-white transition-all ring-1 ring-white/20 flex-shrink-0 min-h-[44px]"
-            title="Refresh dashboard"
-          >
-            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Refresh</span>
-          </button>
         </div>
       </div>
 
