@@ -144,9 +144,9 @@ const deleteCategory = async (req, res) => {
       });
     }
 
-    // Check if category has plants
+    // Check if category has active plants
     const [plants] = await pool.execute(
-      'SELECT COUNT(*) as count FROM plants WHERE category_id = ?',
+      'SELECT COUNT(*) as count FROM plants WHERE category_id = ? AND is_active = 1',
       [id]
     );
 
