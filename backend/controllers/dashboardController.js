@@ -194,7 +194,8 @@ const getAdvancedAnalytics = async (req, res) => {
         health_status,
         COUNT(*) as count
        FROM plants 
-       WHERE last_health_check IS NOT NULL 
+       WHERE is_active = 1 
+         AND last_health_check IS NOT NULL 
          AND last_health_check >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
        GROUP BY DATE_FORMAT(last_health_check, '%Y-%m'), health_status
        ORDER BY month, health_status`

@@ -105,7 +105,7 @@ const createHealthLog = async (req, res) => {
 
     // Verify plant exists and lock the row for update
     const [plants] = await connection.execute(
-      'SELECT plant_id, name, health_status, growth_stage FROM plants WHERE plant_id = ? FOR UPDATE',
+      'SELECT plant_id, name, health_status, growth_stage, is_active FROM plants WHERE plant_id = ? FOR UPDATE',
       [plant_id]
     );
 
@@ -113,6 +113,13 @@ const createHealthLog = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Plant not found.'
+      });
+    }
+
+    if (!plants[0].is_active) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot record health log for a deleted plant.'
       });
     }
 

@@ -5,13 +5,17 @@ const stockService = require('../services/stockService');
 // Get all plants with search and filtering
 const getAllPlants = async (req, res) => {
   try {
-    const { search, category_id, health_status, min_stock } = req.query;
+    const { search, category_id, health_status, min_stock, include_inactive } = req.query;
     
     let query = `SELECT p.*, c.category_name 
                  FROM plants p 
                  LEFT JOIN categories c ON p.category_id = c.category_id 
                  WHERE 1=1`;
     const params = [];
+
+    if (include_inactive !== 'true') {
+      query += ` AND p.is_active = 1`;
+    }
 
     if (search) {
       query += ` AND (p.name LIKE ? OR p.scientific_name LIKE ? OR p.description LIKE ?)`;
@@ -227,12 +231,13 @@ const deletePlant = async (req, res) => {
 
     const plantName = existing[0].name;
 
-    await pool.execute('DELETE FROM plants WHERE plant_id = ?', [id]);
+    // Perform soft delete to preserve audit trail (stock movements, health logs)
+    await pool.execute('UPDATE plants SET is_active = 0 WHERE plant_id = ?', [id]);
 
     // Log activity
     await pool.execute(
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
-      [req.user.user_id, 'DELETE', 'plants', id, `Deleted plant: ${plantName}`]
+      [req.user.user_id, 'DELETE', 'plants', id, `Deleted plant (soft-delete): ${plantName}`]
     );
 
     res.json({

@@ -19,11 +19,12 @@ class StockService {
     try {
       // 1. Lock the plant row for update to prevent race conditions (Audit findings remediation)
       const [plants] = await conn.execute(
-        'SELECT current_stock FROM plants WHERE plant_id = ? FOR UPDATE',
+        'SELECT current_stock, is_active FROM plants WHERE plant_id = ? FOR UPDATE',
         [plantId]
       );
 
       if (plants.length === 0) throw new Error('Plant not found');
+      if (!plants[0].is_active) throw new Error('Cannot update stock for a deleted plant');
       
       const oldStock = plants[0].current_stock;
       let movementId;
