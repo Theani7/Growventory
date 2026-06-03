@@ -61,8 +61,16 @@ const initTables = async () => {
 
   await conn.execute(`CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, title VARCHAR(100), message TEXT,
-    type ENUM('low_stock','health_issue','system','task','approval') DEFAULT 'system', is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    type VARCHAR(50) DEFAULT 'system', is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id))`);
+
+  // Migrate existing ENUM column to VARCHAR if needed (handle schema changes)
+  try {
+    const [cols] = await conn.execute(`SHOW COLUMNS FROM notifications WHERE Field = 'type'`);
+    if (cols.length > 0 && cols[0].Type.toLowerCase().startsWith('enum')) {
+      await conn.execute(`ALTER TABLE notifications MODIFY COLUMN type VARCHAR(50) DEFAULT 'system'`);
+    }
+  } catch (_) {}
 
   await conn.execute(`CREATE TABLE IF NOT EXISTS tasks (
     task_id INT AUTO_INCREMENT PRIMARY KEY,
