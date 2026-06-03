@@ -298,6 +298,7 @@ const Tasks = () => {
                   <label className="label">Due Date</label>
                   <input type="date" className="input-field"
                     value={formData.due_date}
+                    min={new Date().toLocaleDateString('en-CA')}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })} />
                 </div>
               </div>
