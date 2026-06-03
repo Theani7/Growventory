@@ -92,7 +92,6 @@ const getPlantById = async (req, res) => {
 
 // Create new plant
 const createPlant = async (req, res) => {
-  const connection = await pool.getConnection();
   try {
     const { name, scientific_name, category_id, description, current_stock, min_stock_threshold, health_status, growth_stage, location, purchase_price, selling_price } = req.body;
 
@@ -103,61 +102,66 @@ const createPlant = async (req, res) => {
       });
     }
 
-    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
-    const initialStock = parseInt(current_stock) || 0;
+    const connection = await pool.getConnection();
+    try {
+      const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+      const initialStock = parseInt(current_stock) || 0;
 
-    await connection.beginTransaction();
+      await connection.beginTransaction();
 
-    const [result] = await connection.execute(
-      `INSERT INTO plants (name, scientific_name, category_id, description, image_url, current_stock, min_stock_threshold, health_status, growth_stage, location, purchase_price, selling_price) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, scientific_name || null, category_id || null, description || null, image_url, initialStock, min_stock_threshold || 0, health_status || 'healthy', growth_stage || null, location || null, purchase_price || null, selling_price || null]
-    );
-
-    const plantId = result.insertId;
-
-    // Initialize stock movement audit trail if stock > 0
-    if (initialStock > 0) {
-      await stockService.initializeStock(plantId, initialStock, req.user.user_id, connection);
-    }
-
-    const [newPlant] = await connection.execute(
-      `SELECT p.*, c.category_name FROM plants p LEFT JOIN categories c ON p.category_id = c.category_id WHERE p.plant_id = ?`,
-      [plantId]
-    );
-
-    // Log activity
-    await connection.execute(
-      `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
-      [req.user.user_id, 'CREATE', 'plants', plantId, `Added new plant: ${name}`]
-    );
-
-    await connection.commit();
-
-    // Create low stock notification if applicable (outside transaction is fine)
-    const threshold = parseInt(min_stock_threshold) || 0;
-    if (threshold > 0 && initialStock <= threshold) {
-      await notifyAdminsAndSupervisors(
-        'Low Stock Alert',
-        `${name} added with stock below threshold (${initialStock}/${threshold})`,
-        'low_stock'
+      const [result] = await connection.execute(
+        `INSERT INTO plants (name, scientific_name, category_id, description, image_url, current_stock, min_stock_threshold, health_status, growth_stage, location, purchase_price, selling_price) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, scientific_name || null, category_id || null, description || null, image_url, initialStock, min_stock_threshold || 0, health_status || 'healthy', growth_stage || null, location || null, purchase_price || null, selling_price || null]
       );
-    }
 
-    res.status(201).json({
-      success: true,
-      message: 'Plant created successfully.',
-      data: newPlant[0]
-    });
+      const plantId = result.insertId;
+
+      // Initialize stock movement audit trail if stock > 0
+      if (initialStock > 0) {
+        await stockService.initializeStock(plantId, initialStock, req.user.user_id, connection);
+      }
+
+      const [newPlant] = await connection.execute(
+        `SELECT p.*, c.category_name FROM plants p LEFT JOIN categories c ON p.category_id = c.category_id WHERE p.plant_id = ?`,
+        [plantId]
+      );
+
+      // Log activity
+      await connection.execute(
+        `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
+        [req.user.user_id, 'CREATE', 'plants', plantId, `Added new plant: ${name}`]
+      );
+
+      await connection.commit();
+
+      // Create low stock notification if applicable (outside transaction is fine)
+      const threshold = parseInt(min_stock_threshold) || 0;
+      if (threshold > 0 && initialStock <= threshold) {
+        await notifyAdminsAndSupervisors(
+          'Low Stock Alert',
+          `${name} added with stock below threshold (${initialStock}/${threshold})`,
+          'low_stock'
+        );
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Plant created successfully.',
+        data: newPlant[0]
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   } catch (error) {
-    await connection.rollback();
     res.status(500).json({
       success: false,
       message: 'Failed to create plant.',
       error: error.message
     });
-  } finally {
-    connection.release();
   }
 };
 
@@ -166,13 +170,6 @@ const updatePlant = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, scientific_name, category_id, description, current_stock, min_stock_threshold, health_status, growth_stage, location, purchase_price, selling_price, is_active } = req.body;
-
-    if (current_stock !== undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Direct update of current_stock is not allowed. Please use the Stock Management module.'
-      });
-    }
 
     const [existing] = await pool.execute('SELECT * FROM plants WHERE plant_id = ?', [id]);
 
@@ -185,6 +182,9 @@ const updatePlant = async (req, res) => {
 
     const image_url = req.file ? `/uploads/${req.file.filename}` : existing[0].image_url;
 
+    // Note: current_stock is intentionally ignored here (Audit remediation).
+    // All stock changes must go through the /api/stock module.
+    
     await pool.execute(
       `UPDATE plants SET name = ?, scientific_name = ?, category_id = ?, description = ?, image_url = ?, min_stock_threshold = ?, health_status = ?, growth_stage = ?, location = ?, purchase_price = ?, selling_price = ?, is_active = ? WHERE plant_id = ?`,
       [name || existing[0].name, scientific_name ?? existing[0].scientific_name, category_id ?? existing[0].category_id, description ?? existing[0].description, image_url, min_stock_threshold ?? existing[0].min_stock_threshold, health_status || existing[0].health_status, growth_stage ?? existing[0].growth_stage, location ?? existing[0].location, purchase_price ?? existing[0].purchase_price, selling_price ?? existing[0].selling_price, is_active !== undefined ? is_active : existing[0].is_active, id]
@@ -402,7 +402,8 @@ const importPlants = async (req, res) => {
             plantData.location || null,
             plantData.purchase_price ? parseFloat(plantData.purchase_price) : null,
             plantData.selling_price ? parseFloat(plantData.selling_price) : null,
-            plantData.description || null
+            plantData.description || null,
+            1 // is_active
           ]
         );
 

@@ -80,11 +80,7 @@ const getHealthLogById = async (req, res) => {
 
 // Create health log and update plant
 const createHealthLog = async (req, res) => {
-  const connection = await pool.getConnection();
-  
   try {
-    await connection.beginTransaction();
-
     const { plant_id, health_status, growth_stage, notes } = req.body;
     const user_id = req.user.user_id;
 
@@ -103,80 +99,87 @@ const createHealthLog = async (req, res) => {
       });
     }
 
-    // Verify plant exists and lock the row for update
-    const [plants] = await connection.execute(
-      'SELECT plant_id, name, health_status, growth_stage, is_active FROM plants WHERE plant_id = ? FOR UPDATE',
-      [plant_id]
-    );
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    if (plants.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Plant not found.'
-      });
-    }
-
-    if (!plants[0].is_active) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot record health log for a deleted plant.'
-      });
-    }
-
-    const plant = plants[0];
-    const status = health_status.toLowerCase();
-
-    // Insert health log
-    const [logResult] = await connection.execute(
-      `INSERT INTO plant_health_logs (plant_id, health_status, growth_stage, notes, checked_by) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [plant_id, status, growth_stage || null, notes || null, user_id]
-    );
-
-    // Update plant's health status
-    await connection.execute(
-      `UPDATE plants SET health_status = ?, growth_stage = ?, last_health_check = CURRENT_TIMESTAMP WHERE plant_id = ?`,
-      [status, growth_stage || plant.growth_stage, plant_id]
-    );
-
-    // Log activity
-    await connection.execute(
-      `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [user_id, 'HEALTH_CHECK', 'plants', plant_id, 
-       `Health check for ${plant.name}: ${plant.health_status} → ${status}`]
-    );
-
-    // Notify if health is poor or critical
-    if (status === 'poor' || status === 'critical') {
-      await notifyAdminsAndSupervisors(
-        'Health Alert',
-        `${plant.name} health status: ${status.toUpperCase()}`,
-        'health_issue'
+      // Verify plant exists and lock the row for update
+      const [plants] = await connection.execute(
+        'SELECT plant_id, name, health_status, growth_stage, is_active FROM plants WHERE plant_id = ? FOR UPDATE',
+        [plant_id]
       );
+
+      if (plants.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Plant not found.'
+        });
+      }
+
+      if (!plants[0].is_active) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot record health log for a deleted plant.'
+        });
+      }
+
+      const plant = plants[0];
+      const status = health_status.toLowerCase();
+
+      // Insert health log
+      const [logResult] = await connection.execute(
+        `INSERT INTO plant_health_logs (plant_id, health_status, growth_stage, notes, checked_by) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [plant_id, status, growth_stage || null, notes || null, user_id]
+      );
+
+      // Update plant's health status
+      await connection.execute(
+        `UPDATE plants SET health_status = ?, growth_stage = ?, last_health_check = CURRENT_TIMESTAMP WHERE plant_id = ?`,
+        [status, growth_stage || plant.growth_stage, plant_id]
+      );
+
+      // Log activity
+      await connection.execute(
+        `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [user_id, 'HEALTH_CHECK', 'plants', plant_id, 
+         `Health check for ${plant.name}: ${plant.health_status} → ${status}`]
+      );
+
+      // Notify if health is poor or critical
+      if (status === 'poor' || status === 'critical') {
+        await notifyAdminsAndSupervisors(
+          'Health Alert',
+          `${plant.name} health status: ${status.toUpperCase()}`,
+          'health_issue'
+        );
+      }
+
+      await connection.commit();
+
+      const [newLog] = await pool.execute(
+        `SELECT hl.*, p.name as plant_name FROM plant_health_logs hl JOIN plants p ON hl.plant_id = p.plant_id WHERE hl.log_id = ?`,
+        [logResult.insertId]
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Health log recorded successfully.',
+        data: newLog[0]
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
     }
-
-    await connection.commit();
-
-    const [newLog] = await pool.execute(
-      `SELECT hl.*, p.name as plant_name FROM plant_health_logs hl JOIN plants p ON hl.plant_id = p.plant_id WHERE hl.log_id = ?`,
-      [logResult.insertId]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Health log recorded successfully.',
-      data: newLog[0]
-    });
   } catch (error) {
-    await connection.rollback();
     res.status(500).json({
       success: false,
       message: 'Failed to record health log.',
       error: error.message
     });
-  } finally {
-    connection.release();
   }
 };
 
