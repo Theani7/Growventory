@@ -48,6 +48,9 @@ describe('Plant Controller Audit Trail Refactor', () => {
       req.params.id = 1;
       req.body = { current_stock: 50 };
 
+      // Mock pool.execute for plant lookup
+      pool.execute.mockResolvedValueOnce([[{ plant_id: 1, name: 'Test Plant' }]]);
+
       await updatePlant(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);

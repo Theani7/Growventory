@@ -182,9 +182,13 @@ const updatePlant = async (req, res) => {
 
     const image_url = req.file ? `/uploads/${req.file.filename}` : existing[0].image_url;
 
-    // Note: current_stock is intentionally ignored here (Audit remediation).
-    // All stock changes must go through the /api/stock module.
-    
+    if (current_stock !== undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Direct update of current_stock is not allowed. Please use the Stock Management module.'
+      });
+    }
+
     await pool.execute(
       `UPDATE plants SET name = ?, scientific_name = ?, category_id = ?, description = ?, image_url = ?, min_stock_threshold = ?, health_status = ?, growth_stage = ?, location = ?, purchase_price = ?, selling_price = ?, is_active = ? WHERE plant_id = ?`,
       [name || existing[0].name, scientific_name ?? existing[0].scientific_name, category_id ?? existing[0].category_id, description ?? existing[0].description, image_url, min_stock_threshold ?? existing[0].min_stock_threshold, health_status || existing[0].health_status, growth_stage ?? existing[0].growth_stage, location ?? existing[0].location, purchase_price ?? existing[0].purchase_price, selling_price ?? existing[0].selling_price, is_active !== undefined ? is_active : existing[0].is_active, id]
