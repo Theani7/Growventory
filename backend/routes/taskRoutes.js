@@ -12,8 +12,8 @@ router.get('/', getAllTasks);
 router.patch('/:id/status', updateTaskStatus);
 
 // Manage tasks (admin/supervisor)
-router.post('/', authorize('admin'), createTask);
-router.put('/:id', authorize('admin'), updateTask);
-router.delete('/:id', authorize('admin'), deleteTask);
+router.post('/', authorize('admin', 'supervisor'), createTask);
+router.put('/:id', authorize('admin', 'supervisor'), updateTask);
+router.delete('/:id', authorize('admin', 'supervisor'), deleteTask);
 
 module.exports = router;

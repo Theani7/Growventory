@@ -9,7 +9,7 @@ import {
 
 const Stock = () => {
   const { user } = useAuth();
-  const isApprover = ['admin', 'supervisor'].includes(user?.role_name);
+  const isApprover = ['admin', 'supervisor'].includes(user?.role_name?.toLowerCase());
 
   const [movements, setMovements] = useState([]);
   const [plants, setPlants] = useState([]);

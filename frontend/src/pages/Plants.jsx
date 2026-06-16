@@ -12,8 +12,8 @@ const API_HOST = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/ap
 
 const Plants = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role_name === 'admin';
-  const canEdit = ['admin', 'staff'].includes(user?.role_name);
+  const isAdmin = user?.role_name?.toLowerCase() === 'admin';
+  const canEdit = ['admin', 'staff', 'supervisor'].includes(user?.role_name?.toLowerCase());
   const [plants, setPlants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

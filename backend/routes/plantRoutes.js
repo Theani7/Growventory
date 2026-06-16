@@ -65,8 +65,8 @@ router.get('/', getAllPlants);
 router.get('/:id', getPlantById);
 
 // Create/update - Staff, Supervisor, Admin
-router.post('/', authorize('admin', 'staff'), handleUpload(upload.single('image')), createPlant);
-router.put('/:id', authorize('admin', 'staff'), handleUpload(upload.single('image')), updatePlant);
+router.post('/', authorize('admin', 'staff', 'supervisor'), handleUpload(upload.single('image')), createPlant);
+router.put('/:id', authorize('admin', 'staff', 'supervisor'), handleUpload(upload.single('image')), updatePlant);
 
 // Import plants - Admin only
 router.post('/import', authorize('admin'), handleUpload(csvUpload.single('file')), importPlants);

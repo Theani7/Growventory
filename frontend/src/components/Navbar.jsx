@@ -97,7 +97,7 @@ const Navbar = ({ onMenuClick }) => {
 
   useEffect(() => {
     // Auditors don't get notifications
-    if (user?.role_name === 'auditor') return;
+    if (user?.role_name?.toLowerCase() === 'auditor') return;
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 10000);
     const handleFocus = () => fetchUnreadCount();
@@ -130,7 +130,7 @@ const Navbar = ({ onMenuClick }) => {
       staff: 'badge-success',
       auditor: 'badge-warning',
     };
-    return styles[role] || 'badge-neutral';
+    return styles[role?.toLowerCase()] || 'badge-neutral';
   };
 
   const currentTitle = pageTitles[location.pathname] || 'Dashboard';
@@ -174,7 +174,7 @@ const Navbar = ({ onMenuClick }) => {
 
           {/* Right */}
           <div className="flex items-center gap-1.5">
-            {user?.role_name !== 'auditor' && (
+            {user?.role_name?.toLowerCase() !== 'auditor' && (
               <button
                 onClick={() => navigate('/dashboard/notifications')}
                 className="btn-icon relative"
@@ -196,7 +196,7 @@ const Navbar = ({ onMenuClick }) => {
                 <span className={`${getRoleBadge(user?.role_name)} mt-0.5 capitalize text-[10px] py-0`}>
                   {user?.role_name}
                 </span>
-              </div>
+</div>
               
               <div className="relative">
                 <button
@@ -221,7 +221,7 @@ const Navbar = ({ onMenuClick }) => {
                         <User className="w-4 h-4" />
                         Profile
                       </button>
-                      {user?.role_name === 'admin' && (
+                      {user?.role_name?.toLowerCase() === 'admin' && (
                         <button
                           onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
@@ -272,7 +272,7 @@ const Navbar = ({ onMenuClick }) => {
                       <User className="w-4 h-4" />
                       Profile
                     </button>
-                    {user?.role_name === 'admin' && (
+                    {user?.role_name?.toLowerCase() === 'admin' && (
                       <button
                         onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"

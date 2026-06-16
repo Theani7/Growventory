@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Categories = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role_name === 'admin';
+  const canManage = ['admin', 'supervisor'].includes(user?.role_name?.toLowerCase());
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -98,7 +98,7 @@ const Categories = () => {
           <h1 className="page-title mt-1">Categories</h1>
           <p className="page-subtitle">Organize your plants into meaningful groups</p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary">
             <Plus className="w-4 h-4" /> New Category
           </button>
@@ -116,7 +116,7 @@ const Categories = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No categories yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Create your first category to organize plants.</p>
-          {isAdmin && (
+          {canManage && (
             <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary inline-flex">
               <Plus className="w-4 h-4" /> New Category
             </button>
@@ -134,7 +134,7 @@ const Categories = () => {
                     <div className={`w-12 h-12 rounded-2xl ${a.bg} ${a.text} ring-1 ${a.ring} flex items-center justify-center`}>
                       <FolderTree className="w-5 h-5" strokeWidth={2.2} />
                     </div>
-                    {isAdmin && (
+                    {canManage && (
                       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEditModal(category)} className="btn-icon" title="Edit">
                           <Edit2 className="w-4 h-4" />

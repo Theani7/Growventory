@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const Tasks = () => {
   const { user } = useAuth();
-  const isManager = user?.role_name === 'admin';
+  const isManager = ['admin', 'supervisor'].includes(user?.role_name?.toLowerCase());
   
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
