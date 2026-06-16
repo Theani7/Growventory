@@ -417,7 +417,7 @@ const Stock = () => {
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">Record Movement</h2>
                 <p className="text-xs text-ink-500 mt-0.5">
-                  {user?.role_name === 'staff'
+                  {user?.role_name?.toLowerCase() === 'staff'
                     ? 'May require supervisor approval'
                     : 'Auto-approved as supervisor/admin'}
                 </p>
@@ -471,7 +471,7 @@ const Stock = () => {
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Submitting...' : (user?.role_name === 'staff' ? 'Submit' : 'Record')}
+                  {submitting ? 'Submitting...' : (user?.role_name?.toLowerCase() === 'staff' ? 'Submit' : 'Record')}
                 </button>
               </div>
             </form>
