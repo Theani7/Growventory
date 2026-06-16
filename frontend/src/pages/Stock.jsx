@@ -159,7 +159,7 @@ const Stock = () => {
               <Clock className="w-4 h-4" /> {totals.pending} Pending
             </button>
           )}
-          {!isApprover || user?.role_name === 'admin' ? (
+          {!isApprover || user?.role_name?.toLowerCase() === 'admin' ? (
             <button onClick={() => setShowModal(true)} className="btn-primary">
               <Plus className="w-4 h-4" /> Record Movement
             </button>
@@ -302,7 +302,7 @@ const Stock = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No movements yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Record your first stock movement.</p>
-          {(!isApprover || user?.role_name === 'admin') && (
+          {(!isApprover || user?.role_name?.toLowerCase() === 'admin') && (
             <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
               <Plus className="w-4 h-4" /> Record Movement
             </button>
