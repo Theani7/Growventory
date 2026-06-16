@@ -62,7 +62,7 @@ const Users = () => {
       });
     } else {
       setEditingUser(null);
-      const defaultRoleId = roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || 2;
+      const defaultRoleId = roles.find(r => r.role_name?.toLowerCase() === 'staff')?.role_id || roles[0]?.role_id || 2;
       setFormData({ username: '', email: '', password: '', full_name: '', phone: '', role_id: defaultRoleId, is_active: true });
     }
     setShowModal(true);
@@ -323,9 +323,9 @@ const Users = () => {
                             </div>
                           </td>
                           <td className="whitespace-nowrap text-ink-600">{u.email}</td>
-                          <td className="whitespace-nowrap">
+<td className="whitespace-nowrap">
                             {u.role_name ? (
-                              <span className={`${roleColors[u.role_name] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
+                              <span className={`${roleColors[u.role_name?.toLowerCase()] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
                             ) : (
                               <span className="text-ink-400 text-sm italic">Not assigned</span>
                             )}
@@ -346,7 +346,7 @@ const Users = () => {
                                   <button
                                     onClick={() => {
                                       setApproveTarget(u);
-                                      setApproveRoleId(roles.find(r => r.role_name === 'staff')?.role_id || roles[0]?.role_id || '');
+                                      setApproveRoleId(roles.find(r => r.role_name?.toLowerCase() === 'staff')?.role_id || roles[0]?.role_id || '');
                                     }}
                                     disabled={actioning === u.user_id}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition min-h-[36px]"

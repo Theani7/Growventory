@@ -10,28 +10,28 @@ import {
 const Sidebar = ({ onClose, collapsed = false }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const role = user?.role_name;
-  const [menuOpen, setMenuOpen] = useState(false);
+const role = user?.role_name?.toLowerCase();
+   const [menuOpen, setMenuOpen] = useState(false);
 
-  const mainNav = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true, roles: ['admin', 'supervisor', 'staff', 'auditor'] },
-    { path: '/dashboard/plants', icon: Sprout, label: 'Plants', roles: ['admin', 'supervisor', 'staff'] },
-    { path: '/dashboard/categories', icon: FolderTree, label: 'Categories', roles: ['admin', 'supervisor', 'staff'] },
-    { path: '/dashboard/stock', icon: ArrowLeftRight, label: 'Stock', roles: ['admin', 'supervisor', 'staff'] },
-    { path: '/dashboard/health', icon: HeartPulse, label: 'Health', roles: ['admin', 'supervisor', 'staff'] },
-    { path: '/dashboard/tasks', icon: ClipboardList, label: 'Tasks', roles: ['admin', 'supervisor', 'staff'] },
-  ];
+   const mainNav = [
+     { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true, roles: ['admin', 'supervisor', 'staff', 'auditor'] },
+     { path: '/dashboard/plants', icon: Sprout, label: 'Plants', roles: ['admin', 'supervisor', 'staff'] },
+     { path: '/dashboard/categories', icon: FolderTree, label: 'Categories', roles: ['admin', 'supervisor', 'staff'] },
+     { path: '/dashboard/stock', icon: ArrowLeftRight, label: 'Stock', roles: ['admin', 'supervisor', 'staff'] },
+     { path: '/dashboard/health', icon: HeartPulse, label: 'Health', roles: ['admin', 'supervisor', 'staff'] },
+     { path: '/dashboard/tasks', icon: ClipboardList, label: 'Tasks', roles: ['admin', 'supervisor', 'staff'] },
+   ];
 
-  const insightsNav = [
-    { path: '/dashboard/reports', icon: FileBarChart, label: 'Reports', roles: ['admin', 'supervisor', 'auditor'] },
-    { path: '/dashboard/logs', icon: ScrollText, label: 'Activity Logs', roles: ['admin', 'supervisor', 'auditor'] },
-    { path: '/dashboard/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'supervisor', 'staff'] },
-  ];
+   const insightsNav = [
+     { path: '/dashboard/reports', icon: FileBarChart, label: 'Reports', roles: ['admin', 'supervisor', 'auditor'] },
+     { path: '/dashboard/logs', icon: ScrollText, label: 'Activity Logs', roles: ['admin', 'supervisor', 'auditor'] },
+     { path: '/dashboard/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'supervisor', 'staff'] },
+   ];
 
-  const adminNav = [
-    { path: '/dashboard/users', icon: Users, label: 'Users', roles: ['admin'] },
-    { path: '/dashboard/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
-  ];
+   const adminNav = [
+     { path: '/dashboard/users', icon: Users, label: 'Users', roles: ['admin'] },
+     { path: '/dashboard/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
+   ];
 
   const filterByRole = (items) => items.filter(item => item.roles.includes(role));
   const visibleMain = filterByRole(mainNav);

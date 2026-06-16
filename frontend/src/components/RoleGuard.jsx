@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
  */
 const RoleGuard = ({ allowedRoles, children, redirectTo }) => {
   const { user } = useAuth();
-  const role = user?.role_name;
+  const role = user?.role_name?.toLowerCase();
 
   if (!user) return <Navigate to="/login" replace />;
 

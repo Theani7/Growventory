@@ -53,7 +53,7 @@ const authorize = (...allowedRoles) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role_name)) {
+    if (!allowedRoles.includes(req.user.role_name?.toLowerCase())) {
       return res.status(403).json({
         success: false,
         message: `Access denied. Required role: ${allowedRoles.join(' or ')}`
