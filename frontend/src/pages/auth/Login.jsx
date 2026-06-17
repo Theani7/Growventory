@@ -17,14 +17,16 @@ const Login = () => {
     setError('');
     setErrorCode('');
     
-    if (!formData.username || !formData.password) {
+    const trimmedUsername = formData.username.trim();
+
+    if (!trimmedUsername || !formData.password) {
       setError('Please fill in all fields');
       return;
     }
     
     setIsLoading(true);
     try {
-      const result = await login(formData.username, formData.password);
+      const result = await login(trimmedUsername, formData.password);
       if (result.success) {
         navigate('/dashboard');
       } else {
