@@ -1,8 +1,26 @@
 const bcrypt = require('bcryptjs');
 const { pool } = require('./config/db');
 
+const seedRoles = async () => {
+  const roles = [
+    { role_id: 1, role_name: 'admin', description: 'Full system access' },
+    { role_id: 2, role_name: 'supervisor', description: 'Supervisor access' },
+    { role_id: 3, role_name: 'staff', description: 'Standard staff access' },
+    { role_id: 4, role_name: 'auditor', description: 'Read-only access' }
+  ];
+
+  for (const role of roles) {
+    await pool.execute(
+      'INSERT IGNORE INTO roles (role_id, role_name, description) VALUES (?, ?, ?)',
+      [role.role_id, role.role_name, role.description]
+    );
+  }
+  console.log('✓ Roles seeded');
+};
+
 const seedAdmin = async () => {
   try {
+    await seedRoles();
     // Admin credentials
     const adminCredentials = {
       username: 'admin',
