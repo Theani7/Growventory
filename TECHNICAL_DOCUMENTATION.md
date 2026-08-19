@@ -13,6 +13,7 @@ The system is organized into two applications:
 
 ### Backend
 - **Runtime:** Node.js
+- **Language:** TypeScript (strict mode, compiled to `dist/` via `tsc`; dev runner `tsx watch`)
 - **Framework:** Express.js (v4.18)
 - **Database:** MySQL (v8.0+) via `mysql2/promise` connection pool (up to 10 concurrent connections)
 - **Authentication:** JWT (`jsonwebtoken`, configurable expiry, default 7 days) & `bcryptjs` (10 rounds) for password hashing
@@ -24,6 +25,7 @@ The system is organized into two applications:
 
 ### Frontend
 - **Library:** React 18.2
+- **Language:** TypeScript (strict, `jsx: react-jsx`, shared domain types in `src/types.ts`)
 - **Build Tool:** Vite 5
 - **Styling:** Tailwind CSS (v3.4) with custom design tokens (`ink`, `moss`, `accent`, legacy `forest`/`brand` palettes), PostCSS, Autoprefixer
 - **Routing:** React Router DOM (v6)
@@ -39,8 +41,8 @@ The backend follows an MVC-like structure with a centralized **Service Layer** f
 
 - **Controllers** (`backend/controllers/`) — handle HTTP requests, validate input, and orchestrate calls to services/database. Each controller returns a consistent `{ success, message, data? }` envelope (except binary downloads).
 - **Services** (`backend/services/`) — `StockService` centralizes all stock mutations inside SQL transactions using `SELECT ... FOR UPDATE` row-level locking, preventing "Lost Update" anomalies under concurrency. Direct `current_stock` writes from controllers are forbidden (enforced in `plantController.updatePlant`).
-- **Middleware** (`backend/middleware/auth.js`) — `authenticate` verifies the JWT Bearer token and loads the user with their role (rejecting inactive users and users without a role); `authorize(...roles)` enforces RBAC with case-insensitive role comparison.
-- **Notification helpers** — `createNotification()` and `notifyAdminsAndSupervisors()` in `notificationController.js` are reused across modules (stock, health, tasks, users) to fan out in-app alerts.
+- **Middleware** (`backend/middleware/auth.ts`) — `authenticate` verifies the JWT Bearer token and loads the user with their role (rejecting inactive users and users without a role); `authorize(...roles)` enforces RBAC with case-insensitive role comparison.
+- **Notification helpers** — `createNotification()` and `notifyAdminsAndSupervisors()` in `notificationController.ts` are reused across modules (stock, health, tasks, users) to fan out in-app alerts.
 - **Error handling** — global 404 handler and a central error middleware that only exposes stack traces in development.
 - **Rate limiting** — `express-rate-limit` applied to `/api/auth/login` and `/api/auth/register` (max 5 requests per 15 minutes).
 
@@ -49,7 +51,7 @@ The frontend is a single-page application with route-level components under `src
 
 - **State Management:** `AuthContext` (React Context) holds the logged-in user and token (persisted in `localStorage`); module pages use local component state.
 - **Route Protection:** `ProtectedRoute` blocks unauthenticated access; `RoleGuard` restricts routes by role with a fallback redirect to `/dashboard`.
-- **API Integration:** `src/services/api.js` creates an Axios instance (`VITE_API_BASE_URL` or `/api`), attaches the JWT to every request via a request interceptor, and globally handles 401 (clears session, redirects to `/login`) and 5xx (error toast) responses.
+- **API Integration:** `src/services/api.ts` creates an Axios instance (`VITE_API_BASE_URL` or `/api`), attaches the JWT to every request via a request interceptor, and globally handles 401 (clears session, redirects to `/login`) and 5xx (error toast) responses.
 - **Dashboard:** auto-refreshes every 15 seconds and on window focus via parallel `Promise.all` fetches.
 - **Notifications UI:** the Navbar polls `/notifications` for unread count and shows typed toast notifications (`low_stock`, `health_issue`, `system`, `task`, `approval`).
 
@@ -64,7 +66,7 @@ Two explicit approval flows gate critical actions:
 ```text
 growventory/
 ├── backend/
-│   ├── config/            # DB connection pool + auto table initialization (config/db.js)
+│   ├── config/            # DB connection pool + auto table initialization (config/db.ts)
 │   ├── controllers/       # auth, plant, category, stock, health, dashboard,
 │   │                      # report, notification, user, task, settings
 │   ├── middleware/        # JWT authentication + RBAC authorization
@@ -73,8 +75,8 @@ growventory/
 │   ├── utils/             # JWT token generation/verification
 │   ├── tests/             # Jest/Supertest unit tests (mocked DB)
 │   ├── uploads/           # Plant image storage (served at /uploads)
-│   ├── server.js          # App entry, middleware, route mounting
-│   └── seedAdmin.js       # Seeds roles + default admin user
+│   ├── server.ts          # App entry, middleware, route mounting
+│   └── seedAdmin.ts       # Seeds roles + default admin user
 ├── frontend/
 │   ├── public/            # Static assets
 │   ├── src/
@@ -84,10 +86,10 @@ growventory/
 │   │   ├── pages/         # Landing, auth/*, DashboardHome, Plants, Categories,
 │   │   │                  # Stock, Health, Tasks, Reports, Logs, Notifications,
 │   │   │                  # Users, Settings
-│   │   └── services/      # Axios instance with interceptors (api.js)
+│   │   └── services/      # Axios instance with interceptors (api.ts)
 │   ├── netlify.toml       # Netlify build/publish config
 │   ├── _redirects         # SPA fallback redirect
-│   └── vite.config.js     # Dev server (port 3000) + /api & /uploads proxy
+│   └── vite.config.ts     # Dev server (port 3000) + /api & /uploads proxy
 ├── docs/                  # Database schema, API docs, deployment guide,
 │                          # security audit report, testing checklist
 ├── DEMO_GUIDE.md
@@ -96,7 +98,7 @@ growventory/
 
 ## 5. Database Schema
 
-The MySQL database is initialized automatically on server start (`config/db.js`): all tables use `CREATE TABLE IF NOT EXISTS`, and additive migrations (e.g., stock-movement approval columns, plant `is_active`) are applied defensively via try/catch `ALTER TABLE` statements.
+The MySQL database is initialized automatically on server start (`config/db.ts`): all tables use `CREATE TABLE IF NOT EXISTS`, and additive migrations (e.g., stock-movement approval columns, plant `is_active`) are applied defensively via try/catch `ALTER TABLE` statements.
 
 **Tables (10):**
 
@@ -260,20 +262,20 @@ Environment variables configure both applications.
 |---|---|---|
 | `VITE_API_BASE_URL` | `http://localhost:5000/api` | Backend base URL for Axios |
 
-> Note: the Vite dev server runs on port `3000` and proxies `/api` and `/uploads` (configured to target `localhost:5001` in `vite.config.js`); the proxy target should match the backend `PORT` if the proxy path is used instead of `VITE_API_BASE_URL`.
+> Note: the Vite dev server runs on port `3000` and proxies `/api` and `/uploads` (configured to target `localhost:5001` in `vite.config.ts`); the proxy target should match the backend `PORT` if the proxy path is used instead of `VITE_API_BASE_URL`.
 
 ## 9. Setup, Seeding & Scripts
 
-- **Backend:** `npm start` (production) or `npm run dev` (nodemon). Tables and default settings are auto-provisioned on start.
-- **Seed admin:** `node seedAdmin.js` seeds the 4 roles and creates/updates the default admin account (`admin@growventory.com` / `Admin@123`) — change the password after first login.
+- **Backend:** `npm start` (production, runs compiled `dist/server.js`) or `npm run dev` (tsx watch — TypeScript hot reload). Tables and default settings are auto-provisioned on start.
+- **Seed admin:** `npm run seed` seeds the 4 roles and creates/updates the default admin account (`admin@growventory.com` / `Admin@123`) — change the password after first login.
 - **Seed roles via API:** `GET /api/auth/seed-roles`.
-- **Dev utilities:** `get-token.js` (generate a JWT for testing), `reset-admin.js` (re-seed admin credentials), `test-password.js`.
-- **Tests:** `backend/tests/` — Jest unit tests (`stockController.test.js`, `plantController.test.js`) with mocked DB pool and service.
+- **Dev utilities:** `get-token.ts` (generate a JWT for testing), `reset-admin.ts` (re-seed admin credentials), `test-password.ts` — run with `npx tsx <file>.ts`.
+- **Tests:** `backend/tests/` — Jest unit tests (`stockController.test.ts`, `plantController.test.ts`) with mocked DB pool and service, run via `npm test` (@swc/jest).
 - **Frontend:** `npm run dev` (Vite, port 3000), `npm run build` → static output in `dist/`, `npm run preview`.
 
 ## 10. Deployment Notes
 
-- **Backend:** run with `node server.js` behind PM2 (see `docs/Deployment_Guide.md` for a full AWS EC2 + Nginx + PM2 + RDS MySQL walkthrough). Uploaded images persist under `backend/uploads/` and are served at `/uploads`.
+- **Backend:** run with `node dist/server.js` behind PM2 (see `docs/Deployment_Guide.md` for a full AWS EC2 + Nginx + PM2 + RDS MySQL walkthrough). Uploaded images persist under `backend/uploads/` and are served at `/uploads`.
 - **Frontend:** `npm run build` generates static files in `dist/` deployable to Nginx, Netlify, or Vercel. Netlify configuration is pre-included (`netlify.toml`, `_redirects` for SPA fallback).
 - **Environment:** set strong `JWT_SECRET` and DB credentials, `NODE_ENV=production`, and a `FRONTEND_URL` allowlist in production.
 
