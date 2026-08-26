@@ -320,3 +320,115 @@ p, h1, h2, h3, h4, h5, h6, span, div:not([class*="btn"]):not([class*="input"]) {
     @apply bg-white rounded-3xl shadow-elevated-lg overflow-hidden animate-slide-up;
   }
 }
+
+/* === SCROLL REVEAL === */
+@media (prefers-reduced-motion: no-preference) {
+  .rv-fade-up,
+  .rv-fade-in,
+  .rv-slide-left,
+  .rv-slide-right,
+  .rv-scale-in,
+  .rv-blur-in {
+    opacity: 0;
+    will-change: transform, opacity, filter;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transition-property: opacity, transform, filter;
+  }
+
+  .rv-fade-up { transform: translate3d(0, 28px, 0); }
+  .rv-fade-in { transform: translate3d(0, 0, 0); }
+  .rv-slide-left { transform: translate3d(-36px, 0, 0); }
+  .rv-slide-right { transform: translate3d(36px, 0, 0); }
+  .rv-scale-in { transform: scale(0.94); }
+  .rv-blur-in { transform: translate3d(0, 12px, 0); filter: blur(8px); }
+
+  .rv-in {
+    opacity: 1 !important;
+    transform: translate3d(0, 0, 0) scale(1) !important;
+    filter: blur(0) !important;
+  }
+}
+
+/* Hero ambient blobs — slow drift */
+@keyframes blob-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(40px, -30px, 0) scale(1.08); }
+  66% { transform: translate3d(-30px, 25px, 0) scale(0.95); }
+}
+.blob-drift { animation: blob-drift 18s ease-in-out infinite; }
+.blob-drift-slow { animation: blob-drift 24s ease-in-out infinite reverse; }
+
+/* Floating leaves */
+@keyframes leaf-float {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translate3d(20px, 110vh, 0) rotate(360deg); opacity: 0; }
+}
+.leaf-float { animation: leaf-float linear infinite; }
+
+/* Bar chart grow */
+@keyframes bar-grow {
+  0% { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+.bar-grow {
+  transform-origin: bottom;
+  animation: bar-grow 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Marquee for trust strip */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track { animation: marquee 30s linear infinite; }
+
+/* Gentle pulse for the dashboard mockup glow */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.04); }
+}
+.glow-pulse { animation: glow-pulse 6s ease-in-out infinite; }
+
+/* Hero text gradient shimmer */
+@keyframes text-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.text-shimmer {
+  background-size: 200% 100%;
+  animation: text-shimmer 8s linear infinite;
+}
+
+/* Side nav link underline */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 250ms ease, left 250ms ease;
+}
+.nav-underline:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .rv-fade-up, .rv-fade-in, .rv-slide-left, .rv-slide-right,
+  .rv-scale-in, .rv-blur-in,
+  .blob-drift, .blob-drift-slow, .leaf-float,
+  .bar-grow, .marquee-track, .glow-pulse, .text-shimmer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
