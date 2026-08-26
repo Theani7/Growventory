@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { RequestHandler } from 'express';
-import type { RowDataPacket, ResultSetHeader } from 'mysql2';
+import type { RowDataPacket, ResultSetHeader, PoolConnection } from 'mysql2/promise';
 import { pool } from '../config/db';
 import { createNotification } from './notificationController';
 
@@ -23,7 +23,7 @@ const getAllUsers: RequestHandler = async (req, res) => {
     );
     res.json({ success: true, message: 'Users fetched.', data: users });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to fetch users.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch users.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -38,7 +38,7 @@ const getPendingUsers: RequestHandler = async (req, res) => {
     );
     res.json({ success: true, message: 'Pending users fetched.', data: users });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to fetch pending users.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch pending users.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -48,7 +48,7 @@ const getAllRoles: RequestHandler = async (req, res) => {
     const [roles] = await pool.execute<RowDataPacket[]>('SELECT * FROM roles ORDER BY role_id');
     res.json({ success: true, message: 'Roles fetched.', data: roles });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to fetch roles.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch roles.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -102,7 +102,7 @@ const approveUser: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: `User approved as ${roles[0].role_name}.` });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to approve user.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to approve user.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -143,7 +143,7 @@ const rejectUser: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'User registration rejected and removed.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to reject user.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to reject user.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -181,7 +181,7 @@ const createUser: RequestHandler = async (req, res) => {
       data: { user_id: result.insertId }
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to create user.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to create user.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -207,7 +207,7 @@ const updateUser: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'User updated.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to update user.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to update user.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -240,7 +240,7 @@ const toggleUserActive: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'User status toggled.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -266,7 +266,7 @@ const resetPassword: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -281,35 +281,50 @@ const deleteUser: RequestHandler = async (req, res) => {
     const [existing] = await pool.execute<RowDataPacket[]>('SELECT username FROM users WHERE user_id = ?', [id]);
     if (existing.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
 
-    // Activity log first (with admin as actor)
-    await pool.execute<ResultSetHeader>(
-      `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
-      [req.user!.user_id, 'DELETE', 'users', id, `Deleted user: ${existing[0].username}`]
-    );
-
-    // Clean up references to this user before delete (FK constraints)
-    await pool.execute<ResultSetHeader>('DELETE FROM activity_logs WHERE user_id = ?', [id]);
-    await pool.execute<ResultSetHeader>('DELETE FROM notifications WHERE user_id = ?', [id]);
-    // For tables with NOT NULL FKs (tasks), delete the rows rather than nulling
-    await pool.execute<ResultSetHeader>('DELETE FROM tasks WHERE assigned_to = ? OR assigned_by = ?', [id, id]).catch(() => {});
-    // Nullable FKs — just clear the reference
-    await pool.execute<ResultSetHeader>('UPDATE stock_movements SET created_by = NULL WHERE created_by = ?', [id]).catch(() => {});
-    await pool.execute<ResultSetHeader>('UPDATE stock_movements SET approved_by = NULL WHERE approved_by = ?', [id]).catch(() => {});
-    await pool.execute<ResultSetHeader>('UPDATE plant_health_logs SET checked_by = NULL WHERE checked_by = ?', [id]).catch(() => {});
-
+    const connection: PoolConnection = await pool.getConnection();
     try {
-      await pool.execute<ResultSetHeader>('DELETE FROM users WHERE user_id = ?', [id]);
-    } catch (fkError: any) {
-      return res.status(409).json({
-        success: false,
-        message: 'Cannot delete user — they have associated records that prevent deletion. Consider deactivating instead.',
-        error: fkError.message
-      });
-    }
+      await connection.beginTransaction();
 
-    res.json({ success: true, message: 'User deleted.' });
+      // Activity log first (with admin as actor)
+      await connection.execute<ResultSetHeader>(
+        `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
+        [req.user!.user_id, 'DELETE', 'users', id, `Deleted user: ${existing[0].username}`]
+      );
+
+      // Clean up references to this user before delete (FK constraints)
+      await connection.execute<ResultSetHeader>('DELETE FROM activity_logs WHERE user_id = ?', [id]);
+      await connection.execute<ResultSetHeader>('DELETE FROM notifications WHERE user_id = ?', [id]);
+      // For tables with NOT NULL FKs (tasks), delete the rows rather than nulling
+      await connection.execute<ResultSetHeader>('DELETE FROM tasks WHERE assigned_to = ? OR assigned_by = ?', [id, id]);
+      // Nullable FKs — just clear the reference
+      await connection.execute<ResultSetHeader>('UPDATE stock_movements SET created_by = NULL WHERE created_by = ?', [id]);
+      await connection.execute<ResultSetHeader>('UPDATE stock_movements SET approved_by = NULL WHERE approved_by = ?', [id]);
+      await connection.execute<ResultSetHeader>('UPDATE plant_health_logs SET checked_by = NULL WHERE checked_by = ?', [id]);
+
+      try {
+        await connection.execute<ResultSetHeader>('DELETE FROM users WHERE user_id = ?', [id]);
+      } catch (fkError: any) {
+        await connection.rollback();
+        if (fkError?.code === 'ER_ROW_IS_REFERENCED_2' || fkError?.code === 'ER_NO_REFERENCED_ROW_2' || fkError?.errno === 1451 || fkError?.errno === 1452) {
+          return res.status(409).json({
+            success: false,
+            message: 'Cannot delete user — they have associated records that prevent deletion. Consider deactivating instead.',
+            error: fkError.message
+          });
+        }
+        throw fkError;
+      }
+
+      await connection.commit();
+      res.json({ success: true, message: 'User deleted.' });
+    } catch (txError: any) {
+      await connection.rollback();
+      throw txError;
+    } finally {
+      connection.release();
+    }
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 

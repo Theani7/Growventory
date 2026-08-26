@@ -34,7 +34,7 @@ const getAllTasks: RequestHandler = async (req, res) => {
     const [tasks] = await pool.execute<RowDataPacket[]>(query, params);
     res.json({ success: true, message: 'Tasks fetched.', data: tasks });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to fetch tasks.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch tasks.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -72,7 +72,7 @@ const createTask: RequestHandler = async (req, res) => {
       data: { task_id: result.insertId }
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to create task.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to create task.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -132,7 +132,7 @@ const updateTaskStatus: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Task status updated.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -147,10 +147,37 @@ const updateTask: RequestHandler = async (req, res) => {
 
     const oldAssignee = existing[0].assigned_to;
 
+    // Validate payload before touching the row; only validate provided fields
+    const validPriorities = ['low', 'medium', 'high', 'urgent'];
+    const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0)) {
+      return res.status(400).json({ success: false, message: 'Title is required.' });
+    }
+    if (priority !== undefined && !validPriorities.includes(priority)) {
+      return res.status(400).json({ success: false, message: `Invalid priority. Must be one of: ${validPriorities.join(', ')}.` });
+    }
+    if (status !== undefined && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}.` });
+    }
+    if (assigned_to !== undefined && assigned_to !== null) {
+      const [assignee] = await pool.execute<RowDataPacket[]>('SELECT user_id FROM users WHERE user_id = ?', [assigned_to]);
+      if (assignee.length === 0) {
+        return res.status(400).json({ success: false, message: 'Assignee not found.' });
+      }
+    }
+
     await pool.execute<ResultSetHeader>(
       `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, priority = ?, due_date = ?, status = ?
        WHERE task_id = ?`,
-      [title, description || null, assigned_to, priority, due_date || null, status, id]
+      [
+        title ?? existing[0].title,
+        description !== undefined ? (description || null) : existing[0].description,
+        assigned_to !== undefined ? assigned_to : oldAssignee,
+        priority ?? existing[0].priority,
+        due_date !== undefined ? (due_date || null) : existing[0].due_date,
+        status ?? existing[0].status,
+        id
+      ]
     );
 
     // Log activity
@@ -171,7 +198,7 @@ const updateTask: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Task updated.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -193,7 +220,7 @@ const deleteTask: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Task deleted.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 

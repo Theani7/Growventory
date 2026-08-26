@@ -3,7 +3,17 @@ import { pool } from './config/db';
 
 const resetAdmin = async () => {
   try {
-    const newPassword = 'admin';
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_ADMIN_RESET !== 'true') {
+      console.error('❌ Refusing to reset admin password in production. Set ALLOW_ADMIN_RESET=true to override.');
+      process.exit(1);
+    }
+
+    const newPassword = process.env.ADMIN_PASSWORD;
+    if (!newPassword) {
+      console.error('❌ ADMIN_PASSWORD environment variable is required (e.g. ADMIN_PASSWORD=YourPassword npm run reset-admin).');
+      process.exit(1);
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await pool.execute(
@@ -11,7 +21,7 @@ const resetAdmin = async () => {
       [hashedPassword]
     );
 
-    console.log('✅ Admin password reset to: admin');
+    console.log('✅ Admin password reset (value taken from ADMIN_PASSWORD).');
     process.exit(0);
   } catch (err) {
     console.error(err);

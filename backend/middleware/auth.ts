@@ -42,7 +42,7 @@ const authenticate: RequestHandler = async (req, res, next) => {
     return res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

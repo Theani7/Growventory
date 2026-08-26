@@ -41,7 +41,7 @@ const getAllHealthLogs: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch health logs.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -76,7 +76,7 @@ const getHealthLogById: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch health log.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -113,6 +113,7 @@ const createHealthLog: RequestHandler = async (req, res) => {
       );
 
       if (plants.length === 0) {
+        await connection.rollback();
         return res.status(404).json({
           success: false,
           message: 'Plant not found.'
@@ -120,6 +121,7 @@ const createHealthLog: RequestHandler = async (req, res) => {
       }
 
       if (!plants[0].is_active) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'Cannot record health log for a deleted plant.'
@@ -181,7 +183,7 @@ const createHealthLog: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to record health log.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -244,7 +246,7 @@ const updateHealthLog: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update health log.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

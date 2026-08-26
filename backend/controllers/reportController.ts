@@ -3,6 +3,15 @@ import { RequestHandler } from 'express';
 import type { RowDataPacket } from 'mysql2';
 import { pool } from '../config/db';
 
+// Escape a value as a CSV cell (quote when needed; guard against formula injection)
+const csvCell = (v: unknown): string => {
+  const s = String(v ?? '');
+  if (/["=+\-@\t\r]/.test(s.charAt(0)) || s.includes('"') || s.includes(',')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+};
+
 // CSV Export Functions
 const exportInventoryCSV: RequestHandler = async (req, res) => {
   try {
@@ -17,7 +26,7 @@ const exportInventoryCSV: RequestHandler = async (req, res) => {
     let csv = 'Plant ID,Name,Scientific Name,Category,Current Stock,Min Threshold,Health Status,Growth Stage,Location,Purchase Price,Selling Price,Description\n';
 
     plants.forEach(plant => {
-      csv += `${plant.plant_id},"${plant.name}","${plant.scientific_name || ''}","${plant.category_name || ''}",${plant.current_stock},${plant.min_stock_threshold},"${plant.health_status || ''}","${plant.growth_stage || ''}","${plant.location || ''}",${plant.purchase_price || ''},${plant.selling_price || ''},"${(plant.description || '').replace(/"/g, '""')}"\n`;
+      csv += [plant.plant_id, plant.name, plant.scientific_name || '', plant.category_name || '', plant.current_stock, plant.min_stock_threshold, plant.health_status || '', plant.growth_stage || '', plant.location || '', plant.purchase_price ?? '', plant.selling_price ?? '', plant.description || ''].map(csvCell).join(',') + '\n';
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -33,10 +42,10 @@ const exportStockMovementsCSV: RequestHandler = async (req, res) => {
   try {
     const { plant_id, start_date, end_date } = req.query;
     let query = `
-      SELECT sm.*, p.name as plant_name, u.username 
+      SELECT sm.*, p.name as plant_name, COALESCE(u.username, 'Unknown') as username
       FROM stock_movements sm
       JOIN plants p ON sm.plant_id = p.plant_id
-      JOIN users u ON sm.created_by = u.user_id
+      LEFT JOIN users u ON sm.created_by = u.user_id
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -50,7 +59,7 @@ const exportStockMovementsCSV: RequestHandler = async (req, res) => {
       params.push(start_date);
     }
     if (end_date) {
-      query += ' AND sm.movement_date <= ?';
+      query += ' AND sm.movement_date < DATE_ADD(?, INTERVAL 1 DAY)';
       params.push(end_date);
     }
 
@@ -61,7 +70,7 @@ const exportStockMovementsCSV: RequestHandler = async (req, res) => {
     let csv = 'Movement ID,Plant Name,Movement Type,Quantity,Previous Stock,New Stock,Notes,User,Movement Date\n';
 
     movements.forEach(movement => {
-      csv += `${movement.movement_id},"${movement.plant_name}","${movement.movement_type}",${movement.quantity},${movement.previous_stock},${movement.new_stock},"${(movement.notes || '').replace(/"/g, '""')}","${movement.username}","${movement.movement_date}"\n`;
+      csv += [movement.movement_id, movement.plant_name, movement.movement_type, movement.quantity, movement.previous_stock, movement.new_stock, movement.notes || '', movement.username, movement.movement_date].map(csvCell).join(',') + '\n';
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -97,7 +106,7 @@ const exportHealthLogsCSV: RequestHandler = async (req, res) => {
     let csv = 'Log ID,Plant Name,Health Status,Growth Stage,Notes,Checked By,Check Date\n';
 
     logs.forEach(log => {
-      csv += `${log.log_id},"${log.plant_name}","${log.health_status}","${log.growth_stage || ''}","${(log.notes || '').replace(/"/g, '""')}","${log.username}","${log.check_date}"\n`;
+      csv += [log.log_id, log.plant_name, log.health_status, log.growth_stage || '', log.notes || '', log.username, log.check_date].map(csvCell).join(',') + '\n';
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -292,10 +301,10 @@ const generateStockMovementsPDF: RequestHandler = async (req, res) => {
   try {
     const { plant_id, start_date, end_date } = req.query;
     let query = `
-      SELECT sm.*, p.name as plant_name, u.username 
+      SELECT sm.*, p.name as plant_name, COALESCE(u.username, 'Unknown') as username
       FROM stock_movements sm
       JOIN plants p ON sm.plant_id = p.plant_id
-      JOIN users u ON sm.created_by = u.user_id
+      LEFT JOIN users u ON sm.created_by = u.user_id
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -309,7 +318,7 @@ const generateStockMovementsPDF: RequestHandler = async (req, res) => {
       params.push(start_date);
     }
     if (end_date) {
-      query += ' AND sm.movement_date <= ?';
+      query += ' AND sm.movement_date < DATE_ADD(?, INTERVAL 1 DAY)';
       params.push(end_date);
     }
 

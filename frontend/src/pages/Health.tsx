@@ -8,7 +8,7 @@ import type { HealthLog, Plant } from '../types';
 
 const Health = () => {
   const { user } = useAuth();
-  const canRecord = ['admin', 'staff'].includes(user?.role_name ?? '');
+  const canRecord = ['staff', 'supervisor', 'admin'].includes((user?.role_name ?? '').toLowerCase());
   const [logs, setLogs] = useState<HealthLog[]>([]);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);

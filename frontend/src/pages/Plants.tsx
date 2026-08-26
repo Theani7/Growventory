@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -50,6 +50,17 @@ const Plants = () => {
     min_stock_threshold: 0, purchase_price: '', selling_price: '', location: '', description: '', image: null,
     imagePreview: null
   });
+  const plantFiltersRef = useRef({ search: '', category: '', health: '' });
+  plantFiltersRef.current = { search, category: filterCategory, health: filterHealth };
+
+  const buildPlantParams = () => {
+    const { search: s, category, health } = plantFiltersRef.current;
+    const params: Record<string, string> = {};
+    if (s) params.search = s;
+    if (category) params.category_id = category;
+    if (health) params.health_status = health;
+    return params;
+  };
 
   useEffect(() => {
     return () => {
@@ -62,7 +73,7 @@ const Plants = () => {
   useEffect(() => { fetchPlants(); fetchCategories(); }, []);
 
   useEffect(() => {
-    const handleFocus = () => { fetchPlants(); fetchCategories(); };
+    const handleFocus = () => { fetchPlants(buildPlantParams()); fetchCategories(); };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
@@ -107,7 +118,7 @@ const Plants = () => {
     setSubmitting(true);
     const form = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'imagePreview' && value !== null && value !== '') {
+      if (key !== 'imagePreview' && value !== null && value !== undefined) {
         if (typeof value === 'number') {
           form.append(key, String(value));
         } else {

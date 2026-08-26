@@ -60,7 +60,7 @@ const getAllMovements: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stock movements.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -99,7 +99,7 @@ const getMovementById: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stock movement.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -275,7 +275,7 @@ const createMovement: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to record stock movement.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
     connection.release();
@@ -368,7 +368,7 @@ const approveMovement: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to approve stock movement.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
     connection.release();
@@ -390,7 +390,7 @@ const rejectMovement: RequestHandler = async (req, res) => {
       `SELECT sm.*, p.name as plant_name 
        FROM stock_movements sm 
        JOIN plants p ON sm.plant_id = p.plant_id 
-       WHERE sm.movement_id = ?`,
+       WHERE sm.movement_id = ? FOR UPDATE`,
       [id]
     );
 
@@ -417,7 +417,7 @@ const rejectMovement: RequestHandler = async (req, res) => {
     await connection.execute<ResultSetHeader>(
       `UPDATE stock_movements 
        SET approval_status = 'rejected', approved_by = ?, approved_at = NOW(), notes = ?
-       WHERE movement_id = ?`,
+       WHERE movement_id = ? AND approval_status = 'pending'`,
       [approver_id, newNotes, id]
     );
 
@@ -445,7 +445,7 @@ const rejectMovement: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to reject stock movement.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
     connection.release();
@@ -466,7 +466,7 @@ const deleteMovement: RequestHandler = async (req, res) => {
     const [movements] = await connection.execute<RowDataPacket[]>(
       `SELECT sm.*, p.name as plant_name FROM stock_movements sm 
        JOIN plants p ON sm.plant_id = p.plant_id 
-       WHERE sm.movement_id = ?`,
+       WHERE sm.movement_id = ? FOR UPDATE`,
       [id]
     );
 
@@ -483,6 +483,21 @@ const deleteMovement: RequestHandler = async (req, res) => {
         'SELECT current_stock FROM plants WHERE plant_id = ? FOR UPDATE',
         [movement.plant_id]
       );
+
+      // Reversal math is only correct for the latest approved movement;
+      // deleting an older one would corrupt current_stock.
+      const [later] = await connection.execute<RowDataPacket[]>(
+        `SELECT COUNT(*) AS cnt FROM stock_movements 
+         WHERE plant_id = ? AND approval_status = 'approved' AND movement_id > ?`,
+        [movement.plant_id, id]
+      );
+      if (later[0].cnt > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot delete: newer approved movements exist for this plant. Delete the latest movement first.'
+        });
+      }
       const currentStock = plants[0].current_stock;
       let reversedStock: number;
 
@@ -534,7 +549,7 @@ const deleteMovement: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete stock movement.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
     connection.release();

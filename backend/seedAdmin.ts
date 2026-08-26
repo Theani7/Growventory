@@ -21,12 +21,23 @@ const seedRoles = async () => {
 
 const seedAdmin = async () => {
   try {
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_ADMIN_RESET !== 'true') {
+      console.error('❌ Refusing to seed admin in production. Set ALLOW_ADMIN_RESET=true to override.');
+      process.exit(1);
+    }
+
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      console.error('❌ ADMIN_PASSWORD environment variable is required (e.g. ADMIN_PASSWORD=YourPassword npm run seed).');
+      process.exit(1);
+    }
+
     await seedRoles();
     // Admin credentials
     const adminCredentials = {
       username: 'admin',
       email: 'admin@growventory.com',
-      password: 'Admin@123',
+      password: adminPassword,
       full_name: 'System Administrator',
       phone: '1234567890'
     };
@@ -65,7 +76,7 @@ const seedAdmin = async () => {
 
     console.log('\n📧 Login Credentials:');
     console.log('   Email/Username: admin@growventory.com or admin');
-    console.log('   Password: Admin@123');
+    console.log(`   Password: (from ADMIN_PASSWORD environment variable)`);
     console.log('\n⚠️  Please change the password after first login!\n');
 
     process.exit(0);

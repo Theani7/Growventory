@@ -19,8 +19,12 @@ import userRoutes from './routes/userRoutes';
 import taskRoutes from './routes/taskRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 
-const app = express();
 const PORT = process.env.PORT || 5000;
+
+const app = express();
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : Number(process.env.TRUST_PROXY));
+}
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }

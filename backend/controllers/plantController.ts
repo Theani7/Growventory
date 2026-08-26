@@ -54,7 +54,7 @@ const getAllPlants: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch plants.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -88,7 +88,7 @@ const getPlantById: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch plant.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -163,7 +163,7 @@ const createPlant: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create plant.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -194,7 +194,7 @@ const updatePlant: RequestHandler = async (req, res) => {
 
     await pool.execute<ResultSetHeader>(
       `UPDATE plants SET name = ?, scientific_name = ?, category_id = ?, description = ?, image_url = ?, min_stock_threshold = ?, health_status = ?, growth_stage = ?, location = ?, purchase_price = ?, selling_price = ?, is_active = ? WHERE plant_id = ?`,
-      [name || existing[0].name, scientific_name ?? existing[0].scientific_name, category_id ?? existing[0].category_id, description ?? existing[0].description, image_url, min_stock_threshold ?? existing[0].min_stock_threshold, health_status || existing[0].health_status, growth_stage ?? existing[0].growth_stage, location ?? existing[0].location, purchase_price ?? existing[0].purchase_price, selling_price ?? existing[0].selling_price, is_active !== undefined ? is_active : existing[0].is_active, id]
+      [name || existing[0].name, scientific_name === '' ? null : scientific_name ?? existing[0].scientific_name, category_id ?? existing[0].category_id, description === '' ? null : description ?? existing[0].description, image_url, min_stock_threshold ?? existing[0].min_stock_threshold, health_status || existing[0].health_status, growth_stage === '' ? null : growth_stage ?? existing[0].growth_stage, location === '' ? null : location ?? existing[0].location, purchase_price ?? existing[0].purchase_price, selling_price ?? existing[0].selling_price, is_active !== undefined ? is_active : existing[0].is_active, id]
     );
 
     const [updated] = await pool.execute<RowDataPacket[]>(
@@ -217,7 +217,7 @@ const updatePlant: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update plant.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -255,7 +255,7 @@ const deletePlant: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete plant.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -354,7 +354,7 @@ const importPlants: RequestHandler = async (req, res) => {
       });
 
       // Validate required fields
-      if (!plantData.name || !plantData.category_id || !plantData.current_stock || !plantData.min_stock_threshold) {
+      if (!plantData.name || !plantData.category_id || plantData.current_stock === null || plantData.current_stock === '' || !plantData.min_stock_threshold) {
         errors.push(`Row ${i}: Missing required fields`);
         continue;
       }
@@ -446,7 +446,7 @@ const importPlants: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to import plants.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
     connection.release();

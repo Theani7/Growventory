@@ -29,7 +29,7 @@ const getNotifications: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch notifications.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -53,7 +53,7 @@ const getUnreadNotifications: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch unread notifications.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -64,17 +64,22 @@ const markAsRead: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const user_id = req.user!.user_id;
 
-    const [result] = await pool.execute<ResultSetHeader>(
-      'UPDATE notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?',
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT notification_id FROM notifications WHERE notification_id = ? AND user_id = ?',
       [id, user_id]
     );
 
-    if (result.affectedRows === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Notification not found.'
       });
     }
+
+    await pool.execute<ResultSetHeader>(
+      'UPDATE notifications SET is_read = 1 WHERE notification_id = ?',
+      [id]
+    );
 
     res.json({
       success: true,
@@ -84,7 +89,7 @@ const markAsRead: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to mark notification as read.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -107,7 +112,7 @@ const markAllAsRead: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to mark all notifications as read.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

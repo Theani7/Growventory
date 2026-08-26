@@ -23,7 +23,14 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('user');
-    return storedUser ? (JSON.parse(storedUser) as User) : null;
+    if (!storedUser) return null;
+    try {
+      return JSON.parse(storedUser) as User;
+    } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
+    }
   });
   const [loading, setLoading] = useState(false);
 

@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Leaf, User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Phone, ChevronLeft, Sparkles, CheckCircle2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+import api from '../../services/api';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -30,19 +30,14 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          full_name: formData.full_name,
-          phone: formData.phone || null,
-          // role_id intentionally omitted — assigned by admin on approval
-        }),
+      const { data } = await api.post('/auth/register', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+        phone: formData.phone || null,
+        // role_id intentionally omitted — assigned by admin on approval
       });
-      const data = await response.json();
       if (data.success) {
         const isPending = data.data?.pending !== false;
         if (isPending) {
@@ -55,7 +50,7 @@ const Register = () => {
         toast.error(data.message || 'Registration failed');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Registration failed. Please try again.');
+      toast.error(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

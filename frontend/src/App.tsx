@@ -75,7 +75,7 @@ function App() {
 
             {/* Operational pages — auditor blocked */}
             <Route path="plants" element={
-              <RoleGuard allowedRoles={[...OPERATIONAL, /* auditor blocked */]}><Plants /></RoleGuard>
+              <RoleGuard allowedRoles={OPERATIONAL}><Plants /></RoleGuard>
             } />
             <Route path="categories" element={
               <RoleGuard allowedRoles={OPERATIONAL}><Categories /></RoleGuard>

@@ -10,7 +10,7 @@ const getAllSettings: RequestHandler = async (req, res) => {
     settings.forEach(s => { settingsObj[s.setting_key] = s.setting_value; });
     res.json({ success: true, message: 'Settings fetched.', data: settingsObj });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -32,7 +32,7 @@ const updateSetting: RequestHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Settings updated.' });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 

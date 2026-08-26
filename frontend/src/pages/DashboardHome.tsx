@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -79,28 +79,36 @@ const DashboardHome = () => {
     };
   }, []);
 
+  const firstLoadRef = useRef(true);
   const fetchDashboardData = async () => {
-    try {
-      const [overviewRes, lowStockRes, categoryRes, activityRes, healthRes, analyticsRes] = await Promise.all([
-        api.get('/dashboard/overview'),
-        api.get('/dashboard/low-stock'),
-        api.get('/dashboard/category-stats'),
-        api.get('/dashboard/recent-activities'),
-        api.get('/dashboard/health-summary'),
-        api.get('/dashboard/advanced-analytics'),
-      ]);
-      setOverview(overviewRes.data.data);
-      setLowStock(lowStockRes.data.data || []);
-      setCategoryStats(categoryRes.data.data || []);
-      setActivities(activityRes.data.data || []);
-      setHealthSummary(healthRes.data.data || []);
-      setAdvancedAnalytics(analyticsRes.data.data);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to fetch dashboard data');
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
+    const results = await Promise.allSettled([
+      api.get('/dashboard/overview'),
+      api.get('/dashboard/low-stock'),
+      api.get('/dashboard/category-stats'),
+      api.get('/dashboard/recent-activities'),
+      api.get('/dashboard/health-summary'),
+      api.get('/dashboard/advanced-analytics'),
+    ]);
+
+    const [overviewRes, lowStockRes, categoryRes, activityRes, healthRes, analyticsRes] = results.map(
+      (r) => (r.status === 'fulfilled' ? r.value : null)
+    );
+    setOverview(overviewRes?.data.data ?? null);
+    setLowStock(lowStockRes?.data.data || []);
+    setCategoryStats(categoryRes?.data.data || []);
+    setActivities(activityRes?.data.data || []);
+    setHealthSummary(healthRes?.data.data || []);
+    setAdvancedAnalytics(analyticsRes?.data.data ?? null);
+
+    const failures = results.filter((r) => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error('Dashboard endpoints failed:', failures.map((f) => (f as PromiseRejectedResult).reason));
+      if (firstLoadRef.current) {
+        toast.error('Some dashboard data failed to load');
+      }
     }
+    firstLoadRef.current = false;
+    setLoading(false);
   };
 
   const getGreeting = () => {

@@ -22,7 +22,7 @@ const getAllCategories: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -70,7 +70,7 @@ const createCategory: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create category.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -124,7 +124,7 @@ const updateCategory: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update category.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -183,7 +183,7 @@ const deleteCategory: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete category.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

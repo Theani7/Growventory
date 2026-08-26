@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -26,6 +26,8 @@ const Stock = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<StockMovement | null>(null);
   const [formData, setFormData] = useState({ plant_id: '', movement_type: 'IN', quantity: '', notes: '' });
+  const filtersRef = useRef({ plant: '', type: '', status: '' });
+  filtersRef.current = { plant: filterPlant, type: filterType, status: filterStatus };
 
   useEffect(() => { fetchMovements(); fetchPlants(); }, []);
 
@@ -35,13 +37,14 @@ const Stock = () => {
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  const fetchMovements = async () => {
+  const fetchMovements = async (overrides: { plant?: string; type?: string; status?: string } = {}) => {
+    const f = { ...filtersRef.current, ...overrides };
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filterPlant) params.set('plant_id', filterPlant);
-      if (filterType) params.set('movement_type', filterType);
-      if (filterStatus) params.set('status', filterStatus);
+      if (f.plant) params.set('plant_id', f.plant);
+      if (f.type) params.set('movement_type', f.type);
+      if (f.status) params.set('status', f.status);
       const url = '/stock/movements' + (params.toString() ? `?${params}` : '');
       const { data } = await api.get(url);
       setMovements(data.data || []);
@@ -155,17 +158,17 @@ const Stock = () => {
         <div className="flex gap-2">
           {totals.pending > 0 && isApprover && (
             <button
-              onClick={() => { setFilterStatus('pending'); fetchMovements(); }}
+              onClick={() => { setFilterStatus('pending'); fetchMovements({ status: 'pending' }); }}
               className="btn-secondary !ring-amber-200 !text-amber-700 hover:!bg-amber-50"
             >
               <Clock className="w-4 h-4" /> {totals.pending} Pending
             </button>
           )}
-          {!isApprover || user?.role_name?.toLowerCase() === 'admin' ? (
+          {user && (
             <button onClick={() => setShowModal(true)} className="btn-primary">
               <Plus className="w-4 h-4" /> Record Movement
             </button>
-          ) : null}
+          )}
         </div>
       </div>
 
@@ -253,7 +256,7 @@ const Stock = () => {
             </button>
             {hasActiveFilters && (
               <button
-                onClick={() => { setFilterPlant(''); setFilterType(''); setFilterStatus(''); setTimeout(fetchMovements, 0); }}
+                onClick={() => { setFilterPlant(''); setFilterType(''); setFilterStatus(''); fetchMovements({ plant: '', type: '', status: '' }); }}
                 className="btn-secondary"
               >
                 <X className="w-4 h-4" /> Clear
@@ -304,7 +307,7 @@ const Stock = () => {
           </div>
           <h3 className="text-lg font-bold text-ink-900 font-display">No movements yet</h3>
           <p className="text-sm text-ink-500 mt-1 mb-6">Record your first stock movement.</p>
-          {(!isApprover || user?.role_name?.toLowerCase() === 'admin') && (
+          {user && (
             <button onClick={() => setShowModal(true)} className="btn-primary inline-flex">
               <Plus className="w-4 h-4" /> Record Movement
             </button>

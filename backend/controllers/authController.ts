@@ -119,10 +119,16 @@ const register: RequestHandler = async (req, res) => {
       }
     });
   } catch (error: any) {
+    if (error?.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        success: false,
+        message: 'Username or email already exists.'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Registration failed.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -204,7 +210,7 @@ const login: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -221,7 +227,7 @@ const getCurrentUser: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -252,7 +258,7 @@ const seedRoles: RequestHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to seed roles.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

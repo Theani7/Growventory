@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
@@ -20,6 +20,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const initialLoadRef = useRef(true);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => { fetchNotifications(); }, []);
@@ -35,7 +36,7 @@ const Notifications = () => {
   }, []);
 
   const fetchNotifications = async () => {
-    setLoading(true);
+    if (initialLoadRef.current) setLoading(true);
     try {
       const { data } = await api.get('/notifications');
       setNotifications(data.data?.notifications || []);
@@ -44,6 +45,7 @@ const Notifications = () => {
       toast.error('Failed to fetch notifications');
     } finally {
       setLoading(false);
+      initialLoadRef.current = false;
     }
   };
 
