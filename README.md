@@ -2,8 +2,8 @@
 
 Growventory is a comprehensive nursery management platform designed to streamline inventory tracking, plant health monitoring, and staff coordination. Built with a focus on data integrity and security, it provides real-time insights for nursery operators.
 
-[![Backend Status](https://img.shields.io/badge/Backend-Express.js-blue?style=flat-square)](https://expressjs.com/)
-[![Frontend Status](https://img.shields.io/badge/Frontend-React-61DAFB?style=flat-square)](https://reactjs.org/)
+[![Backend Status](https://img.shields.io/badge/Backend-Express.js_%2B_TypeScript-blue?style=flat-square)](https://expressjs.com/)
+[![Frontend Status](https://img.shields.io/badge/Frontend-React_%2B_TypeScript-61DAFB?style=flat-square)](https://reactjs.org/)
 [![Database](https://img.shields.io/badge/Database-MySQL-4479A1?style=flat-square)](https://www.mysql.com/)
 [![Security](https://img.shields.io/badge/Security-Hardened-green?style=flat-square)](docs/full_audit_report_2026-06-03.md)
 
@@ -28,13 +28,13 @@ Growventory is a comprehensive nursery management platform designed to streamlin
 ## 🛠 Tech Stack
 
 ### Backend (Robust API)
-- **Node.js & Express.js**: High-performance asynchronous API layer.
-- **MySQL**: Relational database for structured nursery data.
+- **Node.js, Express.js & TypeScript**: Type-safe, high-performance asynchronous API layer.
+- **MySQL**: Relational database for structured nursery data. Typed queries via `mysql2` generics.
 - **JWT & BCrypt**: Secure authentication and password hashing.
 - **Security Hardening**: Protected by `helmet`, `express-rate-limit`, and environment-aware error handling.
 
 ### Frontend (Modern UI)
-- **React 18 & Vite**: Fast, component-based user interface.
+- **React 18, Vite & TypeScript**: Fast, component-based user interface with end-to-end typing.
 - **Tailwind CSS**: Responsive, utility-first styling for mobile and desktop.
 - **Recharts**: Data visualization for nursery analytics.
 - **React Hot Toast**: Real-time user feedback and error notifications.
@@ -45,20 +45,22 @@ Growventory is a comprehensive nursery management platform designed to streamlin
 
 ```bash
 growventory/
-├── backend/               # Express.js Server
+├── backend/               # Express.js + TypeScript Server
 │   ├── config/            # Database and environment config
 │   ├── controllers/       # Business logic handlers
 │   ├── middleware/        # Auth, RBAC, and Security middleware
 │   ├── routes/            # API Route definitions
 │   ├── services/          # Centralized services (StockService, etc.)
+│   ├── types/             # Shared TypeScript types
 │   └── tests/             # Jest/Supertest integration tests
-├── frontend/              # React SPA
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── context/       # Auth and Global state
-│   │   ├── pages/         # Dashboard and Module views
-│   │   └── services/      # Axios API service with interceptors
-└── docs/                  # Technical documentation and Audit reports
+└── frontend/              # React 18 + Vite + TypeScript SPA
+    ├── src/
+    │   ├── components/    # Reusable UI components
+    │   ├── context/       # Auth and Global state
+    │   ├── pages/         # Dashboard and Module views
+    │   ├── services/      # Axios API service with interceptors
+    │   └── types.ts       # Shared domain types
+    └── docs/              # Technical documentation and Audit reports
 ```
 
 ---
@@ -83,7 +85,9 @@ growventory/
    cd backend
    npm install
    cp .env.example .env  # Configure your DB credentials
-   npm run dev           # Tables are auto-created on start
+   npm run dev           # tsx watch — tables auto-created on start
+   npm run build         # Compile TypeScript → dist/
+   npm run typecheck     # tsc --noEmit
    ```
 
 3. **Frontend Setup:**
@@ -95,10 +99,10 @@ growventory/
    ```
 
 ### Initial Data Setup
-- To seed default roles and an admin user, run the `seedAdmin.js` script:
+- To seed default roles and an admin user, run the seed script:
   ```bash
   cd backend
-  node seedAdmin.js
+  npm run seed
   ```
 
 ---
