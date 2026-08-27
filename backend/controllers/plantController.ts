@@ -8,7 +8,7 @@ import stockService from '../services/stockService';
 // Get all plants with search and filtering
 const getAllPlants: RequestHandler = async (req, res) => {
   try {
-    const { search, category_id, health_status, min_stock, include_inactive } = req.query;
+    const { search, category_id, health_status, min_stock, include_inactive, limit } = req.query;
 
     let query = `SELECT p.*, c.category_name 
                  FROM plants p 
@@ -42,6 +42,11 @@ const getAllPlants: RequestHandler = async (req, res) => {
     }
 
     query += ` ORDER BY p.created_at DESC`;
+
+    if (limit) {
+      query += ` LIMIT ?`;
+      params.push(Number(limit));
+    }
 
     const [plants] = await pool.execute<RowDataPacket[]>(query, params);
 

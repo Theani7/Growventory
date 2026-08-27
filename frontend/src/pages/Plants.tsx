@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -28,13 +29,14 @@ interface PlantFormData {
 
 const Plants = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const isAdmin = user?.role_name?.toLowerCase() === 'admin';
   const canEdit = ['admin', 'staff', 'supervisor'].includes(user?.role_name?.toLowerCase() ?? '');
   const [plants, setPlants] = useState<Plant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('grid');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterHealth, setFilterHealth] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -70,7 +72,15 @@ const Plants = () => {
     };
   }, [formData.imagePreview]);
 
-  useEffect(() => { fetchPlants(); fetchCategories(); }, []);
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch) {
+      fetchPlants({ search: urlSearch });
+    } else {
+      fetchPlants();
+    }
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const handleFocus = () => { fetchPlants(buildPlantParams()); fetchCategories(); };

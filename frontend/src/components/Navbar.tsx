@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, LogOut, Menu, Search, User, Settings, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X, Sparkles } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, User, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X, Sparkles, Sprout, FolderOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
-import type { Notification } from '../types';
+import type { Notification, Plant, Category } from '../types';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -18,7 +18,6 @@ const pageTitles: Record<string, string> = {
   '/dashboard/logs': 'Activity Logs',
   '/dashboard/notifications': 'Notifications',
   '/dashboard/users': 'Users',
-  '/dashboard/settings': 'Settings',
 };
 
 const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
@@ -30,6 +29,15 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const lastSeenIdRef = useRef<number | null>(null);
   const isFirstLoadRef = useRef(true);
+
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ plants: Plant[]; categories: Category[] }>({ plants: [], categories: [] });
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchSelectedIndex, setSearchSelectedIndex] = useState(-1);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
 
   const showNotificationToast = (notif: Notification) => {
     const meta: Record<string, { icon: LucideIcon; bg: string; text: string; ring: string; label: string }> = {
@@ -98,7 +106,6 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   };
 
   useEffect(() => {
-    // Auditors don't get notifications
     if (user?.role_name?.toLowerCase() === 'auditor') return;
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 10000);
@@ -137,6 +144,123 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
   const currentTitle = pageTitles[location.pathname] || 'Dashboard';
 
+  // Search handlers
+  const openSearch = useCallback(() => {
+    setSearchOpen(true);
+    setSearchQuery('');
+    setSearchResults({ plants: [], categories: [] });
+    setSearchSelectedIndex(-1);
+  }, []);
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults({ plants: [], categories: [] });
+    setSearchSelectedIndex(-1);
+  }, []);
+
+  // Cmd+K / Ctrl+K toggle
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (searchOpen) {
+          closeSearch();
+        } else {
+          openSearch();
+        }
+      }
+      if (e.key === 'Escape' && searchOpen) {
+        closeSearch();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchOpen, openSearch, closeSearch]);
+
+  // Focus input when opened
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [searchOpen]);
+
+  // Click outside to close
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
+        closeSearch();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [searchOpen, closeSearch]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchOpen || !searchQuery.trim()) {
+      setSearchResults({ plants: [], categories: [] });
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const [plantsRes, categoriesRes] = await Promise.all([
+          api.get(`/plants?search=${encodeURIComponent(searchQuery)}&limit=5`),
+          api.get('/categories'),
+        ]);
+        const plants = (plantsRes.data.data || []) as Plant[];
+        const allCategories = (categoriesRes.data.data || []) as Category[];
+        const q = searchQuery.toLowerCase();
+        const categories = allCategories.filter(c => c.category_name.toLowerCase().includes(q)).slice(0, 5);
+        setSearchResults({ plants, categories });
+      } catch {
+        setSearchResults({ plants: [], categories: [] });
+      } finally {
+        setSearchLoading(false);
+        setSearchSelectedIndex(-1);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchOpen]);
+
+  const searchResultItems: { type: 'plant' | 'category'; id: number; label: string; subtitle: string; icon: LucideIcon }[] = [
+    ...searchResults.plants.map(p => ({ type: 'plant' as const, id: p.plant_id, label: p.name, subtitle: p.scientific_name || p.category_name || 'Plant', icon: Sprout })),
+    ...searchResults.categories.map(c => ({ type: 'category' as const, id: c.category_id, label: c.category_name, subtitle: `${c.plant_count || 0} plants`, icon: FolderOpen })),
+  ];
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSearchSelectedIndex(prev => Math.min(prev + 1, searchResultItems.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSearchSelectedIndex(prev => Math.max(prev - 1, -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchSelectedIndex >= 0 && searchSelectedIndex < searchResultItems.length) {
+        const item = searchResultItems[searchSelectedIndex];
+        if (item.type === 'plant') {
+          navigate(`/dashboard/plants?search=${encodeURIComponent(item.label)}`);
+        } else {
+          navigate(`/dashboard/categories`);
+        }
+        closeSearch();
+      }
+    }
+  };
+
+  const handleResultClick = (item: typeof searchResultItems[0]) => {
+    if (item.type === 'plant') {
+      navigate(`/dashboard/plants?search=${encodeURIComponent(item.label)}`);
+    } else {
+      navigate(`/dashboard/categories`);
+    }
+    closeSearch();
+  };
+
   return (
     <>
       <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-ink-100">
@@ -159,17 +283,103 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
             </div>
 
             <div className="hidden lg:block flex-1 max-w-md">
-              <div className="relative group">
+              <div className="relative group" ref={searchDropdownRef}>
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400 group-focus-within:text-ink-700 transition-colors" />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Search plants, categories, or anything..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={openSearch}
+                  onKeyDown={handleSearchKeyDown}
                   className="w-full pl-10 pr-12 py-2 bg-ink-50 rounded-xl text-sm text-ink-900 placeholder:text-ink-400 ring-1 ring-transparent
                              focus:outline-none focus:ring-1 focus:ring-ink-300 focus:bg-white transition-all"
                 />
                 <kbd className="hidden xl:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-ink-500 bg-white ring-1 ring-ink-200 rounded">
                   <Command className="w-2.5 h-2.5" /> K
                 </kbd>
+
+                {/* Search dropdown */}
+                {searchOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-elevated-lg ring-1 ring-ink-100 overflow-hidden z-50">
+                    {!searchQuery.trim() && (
+                      <div className="px-4 py-8 text-center text-ink-400 text-sm">
+                        <Search className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        Type to search plants and categories...
+                      </div>
+                    )}
+                    {searchLoading && (
+                      <div className="px-4 py-6 text-center text-ink-400 text-sm">
+                        <div className="animate-spin w-5 h-5 border-2 border-ink-300 border-t-transparent rounded-full mx-auto mb-2" />
+                        Searching...
+                      </div>
+                    )}
+                    {!searchLoading && searchQuery.trim() && searchResultItems.length === 0 && (
+                      <div className="px-4 py-6 text-center text-ink-400 text-sm">
+                        No results found for "{searchQuery}"
+                      </div>
+                    )}
+                    {!searchLoading && searchResultItems.length > 0 && (
+                      <div className="max-h-80 overflow-y-auto py-2">
+                        {searchResults.plants.length > 0 && (
+                          <div>
+                            <div className="px-3 py-1.5 text-[10px] font-semibold text-ink-400 uppercase tracking-wider">Plants</div>
+                            {searchResults.plants.map((plant, idx) => (
+                              <button
+                                key={`plant-${plant.plant_id}`}
+                                onClick={() => handleResultClick({ type: 'plant', id: plant.plant_id, label: plant.name, subtitle: plant.scientific_name || plant.category_name || 'Plant', icon: Sprout })}
+                                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                                  searchResultItems[idx]?.id === plant.plant_id && searchResultItems[idx]?.type === 'plant' && searchSelectedIndex === idx
+                                    ? 'bg-ink-50'
+                                    : 'hover:bg-ink-50'
+                                }`}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-moss-50 text-moss-600 flex items-center justify-center flex-shrink-0">
+                                  <Sprout className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-ink-900 truncate">{plant.name}</p>
+                                  <p className="text-xs text-ink-500 truncate">{plant.scientific_name || plant.category_name}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {searchResults.categories.length > 0 && (
+                          <div>
+                            <div className="px-3 py-1.5 text-[10px] font-semibold text-ink-400 uppercase tracking-wider">Categories</div>
+                            {searchResults.categories.map((cat, catIdx) => {
+                              const globalIdx = searchResults.plants.length + catIdx;
+                              return (
+                                <button
+                                  key={`cat-${cat.category_id}`}
+                                  onClick={() => handleResultClick({ type: 'category', id: cat.category_id, label: cat.category_name, subtitle: `${cat.plant_count || 0} plants`, icon: FolderOpen })}
+                                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                                    searchSelectedIndex === globalIdx ? 'bg-ink-50' : 'hover:bg-ink-50'
+                                  }`}
+                                >
+                                  <div className="w-8 h-8 rounded-lg bg-accent-teal/10 text-accent-teal flex items-center justify-center flex-shrink-0">
+                                    <FolderOpen className="w-4 h-4" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-ink-900 truncate">{cat.category_name}</p>
+                                    <p className="text-xs text-ink-500 truncate">{cat.plant_count || 0} plants</p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="border-t border-ink-100 px-3 py-2 flex items-center gap-3 text-[10px] text-ink-400">
+                      <span className="flex items-center gap-1"><kbd className="font-mono bg-ink-50 px-1 rounded">↑↓</kbd> navigate</span>
+                      <span className="flex items-center gap-1"><kbd className="font-mono bg-ink-50 px-1 rounded">↵</kbd> select</span>
+                      <span className="flex items-center gap-1"><kbd className="font-mono bg-ink-50 px-1 rounded">esc</kbd> close</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -198,8 +408,8 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
                 <span className={`${getRoleBadge(user?.role_name)} mt-0.5 capitalize text-[10px] py-0`}>
                   {user?.role_name}
                 </span>
-</div>
-              
+              </div>
+            
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
@@ -217,21 +427,13 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
                         <p className="text-xs text-ink-500 truncate">{user?.email}</p>
                       </div>
                       <button
-                        onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                        onClick={() => setProfileOpen(false)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
                       >
                         <User className="w-4 h-4" />
                         Profile
                       </button>
-                      {user?.role_name?.toLowerCase() === 'admin' && (
-                        <button
-                          onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
-                        >
-                          <Settings className="w-4 h-4" />
-                          Settings
-                        </button>
-                      )}
+
                       <div className="my-1 mx-2 h-px bg-ink-100" />
                       <button
                         onClick={handleLogout}
@@ -268,21 +470,13 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
                       </span>
                     </div>
                     <button
-                      onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
+                      onClick={() => setProfileOpen(false)}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
                     >
                       <User className="w-4 h-4" />
                       Profile
                     </button>
-                    {user?.role_name?.toLowerCase() === 'admin' && (
-                      <button
-                        onClick={() => { navigate('/dashboard/settings'); setProfileOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
-                      >
-                        <Settings className="w-4 h-4" />
-                        Settings
-                      </button>
-                    )}
+
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
