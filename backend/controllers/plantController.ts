@@ -41,12 +41,11 @@ const getAllPlants: RequestHandler = async (req, res) => {
       params.push(min_stock);
     }
 
-    query += ` ORDER BY p.created_at DESC`;
-
-    if (limit) {
-      query += ` LIMIT ?`;
-      params.push(Number(limit));
-    }
+    const rawLimit = parseInt(String(limit || '50'), 10);
+    const safeLimit = Number.isInteger(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;
+    const rawOffset = parseInt(String(req.query.offset || '0'), 10);
+    const safeOffset = Number.isInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+    query += ` ORDER BY p.created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
     const [plants] = await pool.execute<RowDataPacket[]>(query, params);
 
