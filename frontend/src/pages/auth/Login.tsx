@@ -198,10 +198,6 @@ const Login = () => {
                   </>
                 )}
               </button>
-
-              <p className="text-center text-xs text-stone-500 pt-2">
-                Protected by Growventory • Encrypted & role-based
-              </p>
             </form>
           </div>
         </div>

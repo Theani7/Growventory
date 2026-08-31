@@ -328,6 +328,10 @@ const Users = () => {
 <td className="whitespace-nowrap">
                             {u.role_name ? (
                               <span className={`${roleColors[u.role_name?.toLowerCase() ?? ''] || 'badge-neutral'} capitalize`}>{u.role_name}</span>
+                            ) : u.requested_role ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 bg-amber-50 text-amber-700 ring-amber-200 capitalize">
+                                Requested: {u.requested_role}
+                              </span>
                             ) : (
                               <span className="text-ink-400 text-sm italic">Not assigned</span>
                             )}
@@ -348,7 +352,10 @@ const Users = () => {
                                   <button
                                     onClick={() => {
                                       setApproveTarget(u);
-                                      setApproveRoleId(String(roles.find(r => r.role_name?.toLowerCase() === 'staff')?.role_id || roles[0]?.role_id || ''));
+                                      const req = (u.requested_role || '').toLowerCase();
+                                      const matched = roles.find(r => r.role_name?.toLowerCase() === req)?.role_id;
+                                      const fallback = roles.find(r => r.role_name?.toLowerCase() === 'staff')?.role_id || roles[0]?.role_id;
+                                      setApproveRoleId(String(matched || fallback || ''));
                                     }}
                                     disabled={actioning === u.user_id}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-moss-600 text-white text-xs font-semibold hover:bg-moss-700 disabled:opacity-50 transition min-h-[36px]"
@@ -493,6 +500,11 @@ const Users = () => {
                 <p className="font-bold text-ink-900 mt-0.5">{approveTarget.username}</p>
                 <p className="text-sm text-ink-600">{approveTarget.email}</p>
                 {approveTarget.full_name && <p className="text-sm text-ink-500">{approveTarget.full_name}</p>}
+                {approveTarget.requested_role && (
+                  <span className="inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 capitalize">
+                    Requested: {approveTarget.requested_role}
+                  </span>
+                )}
                 <p className="text-xs text-ink-400 mt-2">
                   Registered {new Date(approveTarget.created_at ?? '').toLocaleString()}
                 </p>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Phone, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Phone, AtSign, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: '', email: '', password: '', confirm_password: '', full_name: '', phone: '',
+    username: '', email: '', password: '', confirm_password: '', full_name: '', phone: '', requested_role: 'staff',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,6 +31,7 @@ const Register = () => {
         password: formData.password,
         full_name: formData.full_name,
         phone: formData.phone || null,
+        requested_role: formData.requested_role,
       });
       if (data.success) {
         const email = formData.email;
@@ -116,18 +117,22 @@ const Register = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[13px] font-medium text-stone-700">Username *</label>
-                  <div className="mt-1.5 relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                    <input type="text" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="johndoe" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
-                  </div>
+              <div>
+                <label className="text-[13px] font-medium text-stone-700">Full name *</label>
+                <div className="mt-1.5 relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <input type="text" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="Jane Doe" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
                 </div>
-                <div>
-                  <label className="text-[13px] font-medium text-stone-700">Full name *</label>
-                  <input type="text" required className="w-full px-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="John Doe" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
+                <p className="mt-1 text-xs text-stone-500">How others will see you</p>
+              </div>
+
+              <div>
+                <label className="text-[13px] font-medium text-stone-700">Username *</label>
+                <div className="mt-1.5 relative">
+                  <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <input type="text" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="janedoe" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
                 </div>
+                <p className="mt-1 text-xs text-stone-500">Used to sign in • 3–20 characters</p>
               </div>
 
               <div>
@@ -136,6 +141,24 @@ const Register = () => {
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input type="email" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="you@example.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[13px] font-medium text-stone-700">Requested role *</label>
+                <div className="mt-1.5 relative">
+                  <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                  <select
+                    value={formData.requested_role}
+                    onChange={(e) => setFormData({ ...formData, requested_role: e.target.value })}
+                    className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] appearance-none"
+                  >
+                    <option value="staff">Staff — Daily operations</option>
+                    <option value="supervisor">Supervisor — Manage staff & approvals</option>
+                    <option value="auditor">Auditor — Read-only reports</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">▾</div>
+                </div>
+                <p className="mt-1 text-xs text-stone-500">Admin will review and confirm your role</p>
               </div>
 
               <div>
@@ -183,12 +206,6 @@ const Register = () => {
                 {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating account...</> : <>Create account <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
-
-            <div className="mt-6 flex items-center gap-3 text-xs text-stone-500">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Email verification</span>
-              <span className="w-px h-4 bg-stone-200" />
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Admin approval</span>
-            </div>
           </div>
         </div>
 

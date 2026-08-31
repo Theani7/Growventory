@@ -8,7 +8,7 @@ import { createNotification } from './notificationController';
 const getAllUsers: RequestHandler = async (req, res) => {
   try {
     const [users] = await pool.execute<RowDataPacket[]>(
-      `SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, u.is_active,
+      `SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, u.is_active, u.requested_role,
               u.created_at, r.role_name,
               CASE 
                 WHEN u.role_id IS NULL THEN 'pending'
@@ -31,7 +31,7 @@ const getAllUsers: RequestHandler = async (req, res) => {
 const getPendingUsers: RequestHandler = async (req, res) => {
   try {
     const [users] = await pool.execute<RowDataPacket[]>(
-      `SELECT user_id, username, email, full_name, phone, created_at
+      `SELECT user_id, username, email, full_name, phone, requested_role, created_at
        FROM users
        WHERE role_id IS NULL
        ORDER BY created_at ASC`

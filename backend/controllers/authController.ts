@@ -111,9 +111,8 @@ const verifyOTPInternal = async (email: string, otp: string, purpose: 'email_ver
 // are auto-assigned the `staff` role and activated immediately.
 const register: RequestHandler = async (req, res) => {
   try {
-    // Note: any role_id from the request body is intentionally ignored — clients can never
-    // self-assign a role. Roles are assigned only by an admin during approval.
-    const { username, email, password, full_name, phone } = req.body;
+    // requested_role is a *request* — still pending until admin approval (role_id stays NULL unless autoApprove)
+    const { username, email, password, full_name, phone, requested_role } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({
@@ -129,6 +128,19 @@ const register: RequestHandler = async (req, res) => {
 
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+
+    // Validate requested role (optional) — staff/supervisor/auditor only; admin cannot be self-requested
+    const allowedRequested = ['staff', 'supervisor', 'auditor'];
+    let normalizedRequested: string | null = null;
+    if (requested_role) {
+      const r = String(requested_role).toLowerCase().trim();
+      if (!allowedRequested.includes(r)) {
+        return res.status(400).json({ success: false, message: 'Invalid requested role. Choose staff, supervisor, or auditor.' });
+      }
+      normalizedRequested = r;
+    } else {
+      normalizedRequested = 'staff'; // default request
     }
 
     // Check if email or username already exists
@@ -165,9 +177,9 @@ const register: RequestHandler = async (req, res) => {
     }
 
     const [result] = await pool.execute<ResultSetHeader>(
-      `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active, is_email_verified) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, FALSE)`,
-      [username, email, hashedPassword, full_name || null, phone || null, role_id, is_active]
+      `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active, is_email_verified, requested_role) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, ?)`,
+      [username, email, hashedPassword, full_name || null, phone || null, role_id, is_active, normalizedRequested]
     );
 
     // Create verification OTP
@@ -196,7 +208,7 @@ const register: RequestHandler = async (req, res) => {
     if (!autoApprove) {
       await notifyAdminsAndSupervisors(
         'New User Registration',
-        `${username} (${email}) registered and is awaiting email verification and role assignment.`,
+        `${username} (${email}) requested role: ${normalizedRequested} — awaiting email verification and role assignment.`,
         'approval'
       );
     }
@@ -209,7 +221,8 @@ const register: RequestHandler = async (req, res) => {
         username,
         email,
         pending: !autoApprove,
-        requiresVerification: true
+        requiresVerification: true,
+        requested_role: normalizedRequested
       }
     });
   } catch (error: any) {

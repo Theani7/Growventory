@@ -19,6 +19,7 @@ export interface User {
   is_active?: boolean | number;
   account_status?: string;
   created_at?: string;
+  requested_role?: string;
 }
 
 export interface Role {
