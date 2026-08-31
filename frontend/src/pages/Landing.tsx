@@ -133,13 +133,6 @@ const Landing = () => {
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative">
-          <Reveal variant="fade-up" delay={0} duration={700}>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              Built for modern nurseries
-            </span>
-          </Reveal>
-
           <Reveal variant="fade-up" delay={120} duration={800}>
             <h1 className="mt-6 text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-[1.1]">
               Smart Nursery Management{' '}
