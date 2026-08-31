@@ -191,6 +191,7 @@ const createMovement: RequestHandler = async (req, res) => {
 
     let movementId: number | string | null;
     let final_new_stock: number;
+    let postCommitNotifs: Array<{title:string, message:string, type:string}> = [];
 
     if (!needsApproval) {
       // Use StockService for atomic update and auto-approved movement record
@@ -213,47 +214,44 @@ const createMovement: RequestHandler = async (req, res) => {
           `Stock ${type.toLowerCase()}: ${plant.name} - ${type === 'ADJUSTMENT' ? `set to ${qty}` : qty} (${previous_stock} → ${final_new_stock})`]
       );
 
-      // For post-commit notifications
-      let postCommitNotifs: Array<{title:string, message:string, type:string}> = [];
-      if (!needsApproval) {
-        if (role === 'staff') {
-          postCommitNotifs.push({
-            title: 'Stock Movement Recorded',
-            message: `${req.user!.username} recorded a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}" (${previous_stock} → ${final_new_stock}).`,
-            type: 'system'
-          });
-        }
-        if (final_new_stock <= plant.min_stock_threshold) {
-          postCommitNotifs.push({
-            title: 'Low Stock Alert',
-            message: `${plant.name} is low on stock: ${final_new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
-            type: 'low_stock'
-          });
-        }
-      } else {
-        // Pending approval, insert movement record manually as 'pending'
-        const [movementResult] = await connection.execute<ResultSetHeader>(
-          `INSERT INTO stock_movements 
-            (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-          [plant_id, type, qty, previous_stock, new_stock, notes || null, user_id]
-        );
-
-        movementId = movementResult.insertId;
-
-        await connection.execute<ResultSetHeader>(
-          `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
-           VALUES (?, ?, ?, ?, ?)`,
-          [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
-            `Pending ${type.toLowerCase()} of ${qty} for ${plant.name}, awaiting supervisor approval`]
-        );
-
+      if (String(role).toLowerCase() === 'staff') {
         postCommitNotifs.push({
-          title: 'Stock Movement Awaiting Approval',
-          message: `${req.user!.username} requested a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}". Review and approve.`,
-          type: 'approval'
+          title: 'Stock Movement Recorded',
+          message: `${req.user!.username} recorded a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}" (${previous_stock} → ${final_new_stock}).`,
+          type: 'system'
         });
       }
+      if (final_new_stock <= plant.min_stock_threshold) {
+        postCommitNotifs.push({
+          title: 'Low Stock Alert',
+          message: `${plant.name} is low on stock: ${final_new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
+          type: 'low_stock'
+        });
+      }
+    } else {
+      // Pending approval, insert movement record manually as 'pending'
+      const [movementResult] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO stock_movements 
+          (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [plant_id, type, qty, previous_stock, new_stock, notes || null, user_id]
+      );
+
+      movementId = movementResult.insertId;
+
+      await connection.execute<ResultSetHeader>(
+        `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
+          `Pending ${type.toLowerCase()} of ${qty} for ${plant.name}, awaiting supervisor approval`]
+      );
+
+      postCommitNotifs.push({
+        title: 'Stock Movement Awaiting Approval',
+        message: `${req.user!.username} requested a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}". Review and approve.`,
+        type: 'approval'
+      });
+    }
 
     await connection.commit();
     // Send notifications only after successful commit to avoid ghosts
