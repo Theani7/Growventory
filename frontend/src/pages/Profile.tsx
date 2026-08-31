@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { User, Mail, Phone, Shield, Lock, Save, Loader2 } from 'lucide-react';
+import Avatar from '../components/Avatar';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -114,9 +115,7 @@ const Profile = () => {
 
       {/* Header card */}
       <div className="card p-6 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1a3a2a] to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-          {profile?.username?.charAt(0).toUpperCase()}
-        </div>
+        <Avatar username={profile?.username} size={56} className="w-14 h-14 rounded-2xl border border-[#d6ead6] shadow-sm" />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-stone-900">{profile?.username}</p>
           <p className="text-sm text-stone-500 truncate">{profile?.email}</p>

@@ -7,6 +7,7 @@ import {
   HeartPulse, FileBarChart, Bell, Users, ClipboardList,
   LogOut, ChevronUp, ScrollText
 } from 'lucide-react';
+import Avatar from './Avatar';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -121,9 +122,7 @@ const role = user?.role_name?.toLowerCase();
             onClick={() => setMenuOpen(!menuOpen)}
             className={`w-full flex items-center gap-3 p-2 rounded-xl hover:bg-moss-50 transition-colors ${collapsed ? 'justify-center' : ''}`}
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-moss-500 to-accent-teal rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
+            <Avatar username={user?.username} size={36} className="w-9 h-9 rounded-xl border border-[#d6ead6] shadow-sm flex-shrink-0" />
             {!collapsed && (
               <>
                 <div className="flex-1 min-w-0 text-left">

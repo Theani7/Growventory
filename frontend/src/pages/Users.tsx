@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { Users as UsersIcon, Plus, Edit, Trash2, Power, Key, X, Search, Shield, CheckCircle2, XCircle, Clock, UserPlus } from 'lucide-react';
+import Avatar from '../components/Avatar';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -326,12 +327,8 @@ const Users = () => {
                         <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
                           <td className="whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 ${
-                                isPending
-                                  ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                                  : 'bg-gradient-to-br from-moss-500 to-accent-teal'
-                              }`}>
-                                {u.username.charAt(0).toUpperCase()}
+                              <div className={`w-10 h-10 rounded-xl overflow-hidden border shadow-sm flex-shrink-0 ${isPending ? 'border-amber-200 bg-amber-50' : 'border-[#d6ead6] bg-[#eef6ee]'}`}>
+                                <Avatar username={u.username} size={40} className="w-full h-full" variant={isPending ? 'initials' : 'adventurer'} />
                               </div>
                               <div className="min-w-0">
                                 <p className="font-bold text-ink-900 truncate">{u.username}</p>

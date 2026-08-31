@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Bell, LogOut, Menu, Search, User, AlertTriangle, Heart, Info, Command, Check, ListTodo, UserCheck, X, Sparkles, Sprout, FolderOpen } from 'lucide-react';
+import Avatar from './Avatar';
 import type { LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -413,9 +414,9 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="w-9 h-9 bg-gradient-to-br from-moss-500 to-accent-teal rounded-xl flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md ring-2 ring-white"
+                  className="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 shadow-sm ring-2 ring-white hover:opacity-90 transition-opacity p-0"
                 >
-                  {user?.username?.charAt(0).toUpperCase()}
+                  <Avatar username={user?.username} size={36} className="w-full h-full" />
                 </button>
 
                 {profileOpen && (
@@ -452,10 +453,10 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
             <div className="sm:hidden relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="w-9 h-9 bg-gradient-to-br from-moss-500 to-accent-teal rounded-xl flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md ring-2 ring-white"
+                className="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 shadow-sm ring-2 ring-white hover:opacity-90 transition-opacity p-0"
                 aria-label="User menu"
               >
-                {user?.username?.charAt(0).toUpperCase()}
+                <Avatar username={user?.username} size={36} className="w-full h-full" />
               </button>
 
               {profileOpen && (
