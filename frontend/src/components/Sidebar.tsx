@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 import { 
   Leaf, LayoutDashboard, Sprout, FolderTree, ArrowLeftRight, 
-  HeartPulse, FileBarChart, Bell, Users, ClipboardList, Settings,
+  HeartPulse, FileBarChart, Bell, Users, ClipboardList,
   LogOut, ChevronUp, ScrollText
 } from 'lucide-react';
 
@@ -42,10 +42,9 @@ const role = user?.role_name?.toLowerCase();
      { path: '/dashboard/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'supervisor', 'staff'] },
    ];
 
-   const adminNav: NavItem[] = [
-     { path: '/dashboard/users', icon: Users, label: 'Users', roles: ['admin'] },
-     { path: '/dashboard/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
-   ];
+    const adminNav: NavItem[] = [
+      { path: '/dashboard/users', icon: Users, label: 'Users', roles: ['admin'] },
+    ];
 
   const filterByRole = (items: NavItem[]) => items.filter(item => item.roles.includes(role ?? ''));
   const visibleMain = filterByRole(mainNav);
@@ -140,18 +139,7 @@ const role = user?.role_name?.toLowerCase();
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
               <div className="absolute bottom-full left-0 right-0 mb-2 bg-white ring-1 ring-ink-100 rounded-xl shadow-elevated-lg py-1 z-20 animate-slide-down">
-                {role === 'admin' && (
-                  <>
-                    <button
-                      onClick={() => { navigate('/dashboard/settings'); setMenuOpen(false); onClose && onClose(); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-moss-50 hover:text-moss-800"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Settings
-                    </button>
-                    <div className="my-1 mx-2 h-px bg-ink-100" />
-                  </>
-                )}
+
                 <button
                   onClick={() => { logout(); navigate('/login'); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
