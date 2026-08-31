@@ -11,10 +11,25 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
   const navigate = useNavigate();
+
+  const validatePhone = (v: string) => {
+    if (!v.trim()) return '';
+    const digits = v.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) return 'Phone must be 10-15 digits';
+    if (!/^\+?[\d\s\-\(\)]+$/.test(v)) return 'Use digits, spaces, dashes, () and + only';
+    return '';
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const pe = validatePhone(formData.phone);
+    if (pe) {
+      setPhoneError(pe);
+      toast.error(pe);
+      return;
+    }
     if (formData.password !== formData.confirm_password) {
       toast.error('Passwords do not match');
       return;
@@ -162,9 +177,30 @@ const Register = () => {
               <div>
                 <label className="text-[13px] font-medium text-stone-700">Phone <span className="font-normal text-stone-400">(optional)</span></label>
                 <div className="mt-1.5 relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input type="tel" className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="+1 (555) 000-0000" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                  <Phone className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${phoneError ? 'text-red-400' : 'text-stone-400'}`} />
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    maxLength={20}
+                    className={`w-full pl-10 pr-3 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition ${phoneError ? 'border-red-300 focus:border-red-400 focus:ring-red-500/20' : 'border-stone-200 focus:border-[#1d4d2e] focus:ring-[#1d4d2e]/20'}`}
+                    placeholder="+977 98XXXXXXXX"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      // allow only +, digits, spaces, dashes, parentheses
+                      if (/^[\d\s\-\(\)\+]*$/.test(v) || v === '') {
+                        setFormData({ ...formData, phone: v });
+                        if (phoneError) setPhoneError(validatePhone(v));
+                      }
+                    }}
+                    onBlur={() => setPhoneError(validatePhone(formData.phone))}
+                  />
                 </div>
+                {phoneError ? (
+                  <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-stone-500">10-15 digits, may include +, spaces or dashes</p>
+                )}
               </div>
 
               <div>

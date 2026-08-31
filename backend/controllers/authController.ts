@@ -130,6 +130,15 @@ const register: RequestHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
     }
 
+    // Validate phone (optional) — must be 10-15 digits if provided, allows +, spaces, dashes, parentheses
+    if (phone && String(phone).trim() !== '') {
+      const phoneStr = String(phone).trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15 || !/^\+?[\d\s\-\(\)]+$/.test(phoneStr)) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number. Use 10-15 digits, may include +, spaces, dashes, parentheses.' });
+      }
+    }
+
     // Validate requested role (optional), staff/supervisor/auditor only; admin cannot be self-requested
     const allowedRequested = ['staff', 'supervisor', 'auditor'];
     let normalizedRequested: string | null = null;

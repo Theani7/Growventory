@@ -76,6 +76,13 @@ const updateMyProfile: RequestHandler = async (req, res) => {
     if (full_name !== undefined && String(full_name).trim().length === 0) {
       return res.status(400).json({ success: false, message: 'Full name cannot be empty.' });
     }
+    if (phone && String(phone).trim() !== '') {
+      const phoneStr = String(phone).trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15 || !/^\+?[\d\s\-\(\)]+$/.test(phoneStr)) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number. Use 10-15 digits, may include +, spaces, dashes, parentheses.' });
+      }
+    }
     await pool.execute<ResultSetHeader>(
       `UPDATE users SET full_name = ?, phone = ? WHERE user_id = ?`,
       [full_name?.toString().trim() || null, phone?.toString().trim() || null, userId]
@@ -245,6 +252,14 @@ const createUser: RequestHandler = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Username or email already exists.' });
     }
 
+    if (phone && String(phone).trim() !== '') {
+      const phoneStr = String(phone).trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15 || !/^\+?[\d\s\-\(\)]+$/.test(phoneStr)) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number. Use 10-15 digits, may include +, spaces, dashes, parentheses.' });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.execute<ResultSetHeader>(
       `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)`,
@@ -274,6 +289,14 @@ const updateUser: RequestHandler = async (req, res) => {
 
     const [existing] = await pool.execute<RowDataPacket[]>('SELECT username FROM users WHERE user_id = ?', [id]);
     if (existing.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    if (phone && String(phone).trim() !== '') {
+      const phoneStr = String(phone).trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15 || !/^\+?[\d\s\-\(\)]+$/.test(phoneStr)) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number. Use 10-15 digits, may include +, spaces, dashes, parentheses.' });
+      }
+    }
 
     await pool.execute<ResultSetHeader>(
       `UPDATE users SET username = ?, email = ?, full_name = ?, phone = ?, role_id = ?, is_active = ?

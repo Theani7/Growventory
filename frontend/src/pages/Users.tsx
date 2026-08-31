@@ -35,6 +35,15 @@ const Users = () => {
   const [formData, setFormData] = useState({
     username: '', email: '', password: '', full_name: '', phone: '', role_id: 2, is_active: true,
   });
+  const [phoneError, setPhoneError] = useState('');
+
+  const validatePhone = (v: string) => {
+    if (!v.trim()) return '';
+    const digits = v.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) return 'Phone must be 10-15 digits';
+    if (!/^\+?[\d\s\-\(\)]+$/.test(v)) return 'Use digits, spaces, dashes, () and + only';
+    return '';
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -55,6 +64,7 @@ const Users = () => {
   useEffect(() => { fetchData(); }, []);
 
   const openModal = (user: User | null = null) => {
+    setPhoneError('');
     if (user) {
       setEditingUser(user);
       setFormData({
@@ -72,6 +82,12 @@ const Users = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const pe = validatePhone(formData.phone);
+    if (pe) {
+      setPhoneError(pe);
+      toast.error(pe);
+      return;
+    }
     try {
       if (editingUser) {
         await api.put(`/users/${editingUser.user_id}`, formData);
@@ -447,9 +463,27 @@ const Users = () => {
               </div>
               <div>
                 <label className="label">Phone</label>
-                <input type="tel" className="input-field"
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  maxLength={20}
+                  placeholder="+977 98XXXXXXXX"
+                  className={`input-field ${phoneError ? 'ring-red-300 border-red-300 focus:ring-red-500/20' : ''}`}
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (/^[\d\s\-\(\)\+]*$/.test(v) || v === '') {
+                      setFormData({ ...formData, phone: v });
+                      if (phoneError) setPhoneError(validatePhone(v));
+                    }
+                  }}
+                  onBlur={() => setPhoneError(validatePhone(formData.phone))}
+                />
+                {phoneError ? (
+                  <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-stone-500">10-15 digits, may include +, spaces or dashes</p>
+                )}
               </div>
               <div>
                 <label className="label">Role *</label>

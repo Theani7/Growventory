@@ -22,7 +22,16 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [changing, setChanging] = useState(false);
   const [form, setForm] = useState({ full_name: '', phone: '' });
+  const [phoneError, setPhoneError] = useState('');
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
+
+  const validatePhone = (v: string) => {
+    if (!v.trim()) return '';
+    const digits = v.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) return 'Phone must be 10-15 digits';
+    if (!/^\+?[\d\s\-\(\)]+$/.test(v)) return 'Use digits, spaces, dashes, () and + only';
+    return '';
+  };
 
   const fetchProfile = async () => {
     try {
@@ -40,6 +49,12 @@ const Profile = () => {
   useEffect(() => { fetchProfile(); }, []);
 
   const handleSave = async () => {
+    const pe = validatePhone(form.phone);
+    if (pe) {
+      setPhoneError(pe);
+      toast.error(pe);
+      return;
+    }
     if (!form.full_name.trim()) {
       toast.error('Full name cannot be empty');
       return;
@@ -165,14 +180,28 @@ const Profile = () => {
           <div>
             <label className="label">Phone</label>
             <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Phone className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${phoneError ? 'text-red-400' : 'text-stone-400'}`} />
               <input
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+977-..."
-                className="input-field pl-10"
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (/^[\d\s\-\(\)\+]*$/.test(v) || v === '') {
+                    setForm({ ...form, phone: v });
+                    if (phoneError) setPhoneError(validatePhone(v));
+                  }
+                }}
+                onBlur={() => setPhoneError(validatePhone(form.phone))}
+                placeholder="+977 98XXXXXXXX"
+                inputMode="tel"
+                maxLength={20}
+                className={`input-field pl-10 ${phoneError ? 'ring-red-300 border-red-300 focus:ring-red-500/20 focus:border-red-400' : ''}`}
               />
             </div>
+            {phoneError ? (
+              <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+            ) : (
+              <p className="mt-1 text-xs text-stone-500">10-15 digits, may include +, spaces or dashes</p>
+            )}
           </div>
 
           <div className="flex justify-end pt-2">
