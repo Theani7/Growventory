@@ -70,9 +70,9 @@ const DashboardHome = () => {
   useEffect(() => { fetchDashboardData(); }, []); 
 
   useEffect(() => {
-    const handleFocus = () => fetchDashboardData();
+    const handleFocus = () => { if (document.visibilityState === 'visible') fetchDashboardData(); };
     window.addEventListener('focus', handleFocus);
-    const interval = setInterval(fetchDashboardData, 15000);
+    const interval = setInterval(() => { if (document.visibilityState === 'visible') fetchDashboardData(); }, 15000);
     return () => {
       window.removeEventListener('focus', handleFocus);
       clearInterval(interval);

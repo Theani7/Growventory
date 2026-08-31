@@ -80,7 +80,7 @@ const Plants = () => {
       fetchPlants();
     }
     fetchCategories();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const handleFocus = () => { fetchPlants(buildPlantParams()); fetchCategories(); };
