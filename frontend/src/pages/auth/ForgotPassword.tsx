@@ -218,7 +218,6 @@ const ForgotPassword = () => {
                 <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base disabled:opacity-70">
                   {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Resetting...</> : <>Reset password <ArrowRight className="w-5 h-5" /></>}
                 </button>
-                <p className="text-xs text-stone-500 text-center">Code: <span className="font-mono font-semibold tracking-widest">{otp || '••••'}</span> • Re-verify if code expires</p>
               </form>
             </>
           )}

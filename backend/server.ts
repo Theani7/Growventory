@@ -3,6 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { testConnection } from './config/db';
 
 // Import routes
@@ -20,9 +21,16 @@ import settingsRoutes from './routes/settingsRoutes';
 
 const PORT = process.env.PORT || 5000;
 
+// Fail fast if JWT secret is weak/missing
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET.includes('dev_secret')) {
+  console.error('❌ JWT_SECRET must be set to a strong 32+ char value (not dev_secret).');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+
 const app = express();
 if (process.env.TRUST_PROXY) {
-  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : Number(process.env.TRUST_PROXY));
+  const v = process.env.TRUST_PROXY;
+  app.set('trust proxy', v === 'true' ? 1 : (isNaN(Number(v)) ? 1 : Number(v)));
 }
 
 app.use(helmet({
@@ -30,7 +38,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'development' ? true : [
+  origin: [
     'http://localhost:3000',
     'http://localhost:5173',
     process.env.FRONTEND_URL
@@ -38,9 +46,13 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Global rate limit: 200 req / 15min per IP
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
+
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+// Serve uploads from backend/uploads regardless of dist vs src
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'Welcome to Growventory API', version: '1.1.0' });
@@ -74,7 +86,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-app.listen(PORT as number, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+(async () => {
   await testConnection();
-});
+  app.listen(PORT as number, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+})();

@@ -9,7 +9,10 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'growventory',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 100,
+  connectTimeout: 10000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
 const initTables = async () => {
@@ -141,6 +144,18 @@ const initTables = async () => {
         'INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES (?, ?)',
         [key, value]
       );
+    }
+
+    // Hot-filter indexes (ignore if already exists)
+    const indexes = [
+      `CREATE INDEX idx_plants_active_stock ON plants(is_active, current_stock)`,
+      `CREATE INDEX idx_plants_health ON plants(health_status)`,
+      `CREATE INDEX idx_stock_plant_status_date ON stock_movements(plant_id, approval_status, movement_date)`,
+      `CREATE INDEX idx_health_plant_date ON plant_health_logs(plant_id, check_date)`,
+      `CREATE INDEX idx_activity_user_date ON activity_logs(user_id, created_at)`,
+    ];
+    for (const sql of indexes) {
+      try { await conn.execute<ResultSetHeader>(sql); } catch {}
     }
 
     console.log('✅ Tables initialized');
