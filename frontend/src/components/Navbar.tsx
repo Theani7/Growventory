@@ -427,7 +427,7 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
                         <p className="text-xs text-ink-500 truncate">{user?.email}</p>
                       </div>
                       <button
-                        onClick={() => setProfileOpen(false)}
+                        onClick={() => { setProfileOpen(false); navigate('/dashboard/profile'); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
                       >
                         <User className="w-4 h-4" />
@@ -470,7 +470,7 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
                       </span>
                     </div>
                     <button
-                      onClick={() => setProfileOpen(false)}
+                      onClick={() => { setProfileOpen(false); navigate('/dashboard/profile'); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 border-b border-ink-100"
                     >
                       <User className="w-4 h-4" />

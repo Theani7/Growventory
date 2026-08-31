@@ -4,6 +4,9 @@ import {
   getAllUsers,
   getPendingUsers,
   getAllRoles,
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
   createUser,
   updateUser,
   toggleUserActive,
@@ -18,6 +21,11 @@ router.use(authenticate);
 
 // Roles list (any authenticated user)
 router.get('/roles', getAllRoles);
+
+// Own profile (any authenticated role)
+router.get('/me', getMyProfile);
+router.put('/me', updateMyProfile);
+router.patch('/me/password', changeMyPassword);
 
 // User management (admin only)
 router.get('/', authorize('admin'), getAllUsers);

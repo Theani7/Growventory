@@ -52,6 +52,75 @@ const getAllRoles: RequestHandler = async (req, res) => {
   }
 };
 
+// Get own profile (any authenticated role)
+const getMyProfile: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user!.user_id;
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active, u.is_email_verified, u.created_at
+       FROM users u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.user_id = ?`,
+      [userId]
+    );
+    if (rows.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+    res.json({ success: true, message: 'Profile fetched.', data: rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Failed to fetch profile.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+  }
+};
+
+// Update own profile (full_name, phone)
+const updateMyProfile: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user!.user_id;
+    const { full_name, phone } = req.body;
+    if (full_name !== undefined && String(full_name).trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Full name cannot be empty.' });
+    }
+    await pool.execute<ResultSetHeader>(
+      `UPDATE users SET full_name = ?, phone = ? WHERE user_id = ?`,
+      [full_name?.toString().trim() || null, phone?.toString().trim() || null, userId]
+    );
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name FROM users u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.user_id = ?`,
+      [userId]
+    );
+    await pool.execute<ResultSetHeader>(
+      `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
+      [userId, 'UPDATE_PROFILE', 'users', userId, `Updated own profile`]
+    );
+    res.json({ success: true, message: 'Profile updated.', data: rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Failed to update profile.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+  }
+};
+
+// Change own password
+const changeMyPassword: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user!.user_id;
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, message: 'Current and new password are required.' });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    }
+    const [rows] = await pool.execute<RowDataPacket[]>(`SELECT password FROM users WHERE user_id = ?`, [userId]);
+    if (rows.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+    const ok = await bcrypt.compare(current_password, rows[0].password);
+    if (!ok) return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+    const hashed = await bcrypt.hash(new_password, 10);
+    await pool.execute<ResultSetHeader>(`UPDATE users SET password = ? WHERE user_id = ?`, [hashed, userId]);
+    await pool.execute<ResultSetHeader>(
+      `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
+      [userId, 'CHANGE_PASSWORD', 'users', userId, `Changed own password`]
+    );
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Failed to change password.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+  }
+};
+
 // Approve a pending user (admin), assigns role and activates account
 const approveUser: RequestHandler = async (req, res) => {
   try {
@@ -344,6 +413,9 @@ export {
   getAllUsers,
   getPendingUsers,
   getAllRoles,
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
   createUser,
   updateUser,
   toggleUserActive,

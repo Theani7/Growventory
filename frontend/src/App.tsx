@@ -19,6 +19,7 @@ import Notifications from './pages/Notifications';
 import Users from './pages/Users';
 import Tasks from './pages/Tasks';
 import Logs from './pages/Logs';
+import Profile from './pages/Profile';
 
 // Everyone lands on the standard Overview
 const DashboardIndex = () => {
@@ -108,6 +109,8 @@ function App() {
             <Route path="users" element={
               <RoleGuard allowedRoles={['admin']}><Users /></RoleGuard>
             } />
+            {/* Profile — every authenticated role */}
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Fallback */}
