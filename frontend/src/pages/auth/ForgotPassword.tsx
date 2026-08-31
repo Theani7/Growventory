@@ -15,6 +15,8 @@ const ForgotPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const isStrongPassword = (p: string) =>
+    p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -87,8 +89,8 @@ const ForgotPassword = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (!isStrongPassword(newPassword)) {
+      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -199,11 +201,12 @@ const ForgotPassword = () => {
                   <label className="label">New password *</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                    <input type={showPassword ? 'text' : 'password'} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 6 characters" className="input-field pl-10 pr-10" />
+                    <input type={showPassword ? 'text' : 'password'} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" className="input-field pl-10 pr-10" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
                 </div>
                 <div>
                   <label className="label">Confirm password *</label>

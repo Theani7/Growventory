@@ -7,6 +7,9 @@ import { notifyAdminsAndSupervisors } from './notificationController';
 import { generateOTP, hashOTP, verifyOTP, getExpiryDate, OTP_MAX_ATTEMPTS, OTP_RESEND_COOLDOWN_SECONDS } from '../utils/otp';
 import { sendVerificationOTP as sendVerificationEmail, sendPasswordResetOTP as sendPasswordResetEmail } from '../services/emailService';
 
+const isStrongPassword = (p: string) =>
+  p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+
 // Helper, read a system setting
 const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
   try {
@@ -126,8 +129,8 @@ const register: RequestHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email format.' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
     }
 
     // Validate phone (optional) — must be 10-15 digits if provided, allows +, spaces, dashes, parentheses
@@ -487,7 +490,7 @@ const resetPassword: RequestHandler = async (req, res) => {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) return res.status(400).json({ success: false, message: 'Email, code, and new password are required.' });
     if (!/^\d{4}$/.test(otp)) return res.status(400).json({ success: false, message: 'Code must be 4 digits.' });
-    if (newPassword.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    if (!isStrongPassword(newPassword)) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
 
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id FROM users WHERE email = ?`, [email]);
     if (users.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email.' });

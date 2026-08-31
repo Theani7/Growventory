@@ -46,6 +46,9 @@ const Users = () => {
     return '';
   };
 
+  const isStrongPassword = (p: string) =>
+    p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -87,6 +90,10 @@ const Users = () => {
     if (pe) {
       setPhoneError(pe);
       toast.error(pe);
+      return;
+    }
+    if (!editingUser && !isStrongPassword(formData.password)) {
+      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
       return;
     }
     try {
@@ -168,8 +175,8 @@ const Users = () => {
   };
 
   const handleResetPassword = async (id: number) => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (!newPassword || !isStrongPassword(newPassword)) {
+      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
       return;
     }
     try {
@@ -450,7 +457,9 @@ const Users = () => {
                   <label className="label">Password *</label>
                   <input type="password" required className="input-field"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Min. 8 characters" />
+                  <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
                 </div>
               )}
               <div>
@@ -697,11 +706,11 @@ const Users = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="input-field"
-                  placeholder="Enter new password (min 6 characters)"
-                  minLength={6}
+                  placeholder="Min. 8 characters"
                   autoFocus
                 />
-                <p className="text-xs text-ink-500 mt-1.5">The user will need to use this password to log in.</p>
+                <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
+                <p className="text-xs text-ink-500 mt-1">The user will need to use this password to log in.</p>
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-secondary">Cancel</button>

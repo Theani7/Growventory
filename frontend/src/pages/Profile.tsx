@@ -26,6 +26,9 @@ const Profile = () => {
   const [phoneError, setPhoneError] = useState('');
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
 
+  const isStrongPassword = (p: string) =>
+    p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+
   const validatePhone = (v: string) => {
     if (!v.trim()) return '';
     const digits = v.replace(/\D/g, '');
@@ -77,8 +80,8 @@ const Profile = () => {
       toast.error('Fill current and new password');
       return;
     }
-    if (pwd.new_password.length < 6) {
-      toast.error('New password must be at least 6 characters');
+    if (!isStrongPassword(pwd.new_password)) {
+      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
       return;
     }
     if (pwd.new_password !== pwd.confirm) {
@@ -241,9 +244,10 @@ const Profile = () => {
               type="password"
               value={pwd.new_password}
               onChange={(e) => setPwd({ ...pwd, new_password: e.target.value })}
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
               className="input-field"
             />
+            <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
           </div>
           <div>
             <label className="label">Confirm new password *</label>

@@ -22,6 +22,9 @@ const Register = () => {
     return '';
   };
 
+  const isStrongPassword = (p: string) =>
+    p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const pe = validatePhone(formData.phone);
@@ -30,12 +33,12 @@ const Register = () => {
       toast.error(pe);
       return;
     }
-    if (formData.password !== formData.confirm_password) {
-      toast.error('Passwords do not match');
+    if (!isStrongPassword(formData.password)) {
+      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
       return;
     }
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (formData.password !== formData.confirm_password) {
+      toast.error('Passwords do not match');
       return;
     }
     setLoading(true);
@@ -67,9 +70,9 @@ const Register = () => {
     const p = formData.password;
     if (!p) return { level: 0, label: '', color: '' };
     let score = 0;
-    if (p.length >= 6) score++;
-    if (p.length >= 10) score++;
-    if (/[A-Z]/.test(p)) score++;
+    if (p.length >= 8) score++;
+    if (p.length >= 12) score++;
+    if (/[A-Z]/.test(p) && /[a-z]/.test(p)) score++;
     if (/[0-9]/.test(p)) score++;
     if (/[^A-Za-z0-9]/.test(p)) score++;
     const levels = [
@@ -79,7 +82,7 @@ const Register = () => {
       { label: 'Strong', color: 'bg-emerald-500' },
       { label: 'Excellent', color: 'bg-[#1a3a2a]' },
     ];
-    return { level: score, ...levels[Math.min(score - 1, 4)] };
+    return { level: score, ...levels[Math.min(score, 4)] };
   };
   const strength = getPasswordStrength();
 
@@ -207,11 +210,12 @@ const Register = () => {
                 <label className="text-[13px] font-medium text-stone-700">Password *</label>
                 <div className="mt-1.5 relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input type={showPassword ? 'text' : 'password'} required className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="Min. 6 characters" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                  <input type={showPassword ? 'text' : 'password'} required className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="Min. 8 characters" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
                 {formData.password && (
                   <div className="mt-2">
                     <div className="flex gap-1.5">

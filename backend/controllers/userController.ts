@@ -4,6 +4,9 @@ import type { RowDataPacket, ResultSetHeader, PoolConnection } from 'mysql2/prom
 import { pool } from '../config/db';
 import { createNotification } from './notificationController';
 
+const isStrongPassword = (p: string) =>
+  p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+
 // Get all users (admin only), uses LEFT JOIN so pending users (role_id NULL) are included
 const getAllUsers: RequestHandler = async (req, res) => {
   try {
@@ -109,8 +112,8 @@ const changeMyPassword: RequestHandler = async (req, res) => {
     if (!current_password || !new_password) {
       return res.status(400).json({ success: false, message: 'Current and new password are required.' });
     }
-    if (new_password.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    if (!isStrongPassword(new_password)) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
     }
     const [rows] = await pool.execute<RowDataPacket[]>(`SELECT password FROM users WHERE user_id = ?`, [userId]);
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
@@ -244,6 +247,10 @@ const createUser: RequestHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Username, email, password, role required.' });
     }
 
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
+    }
+
     const [existing] = await pool.execute<RowDataPacket[]>(
       'SELECT user_id FROM users WHERE username = ? OR email = ?',
       [username, email]
@@ -353,8 +360,8 @@ const resetPassword: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const { new_password } = req.body;
-    if (!new_password || new_password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 chars.' });
+    if (!new_password || !isStrongPassword(new_password)) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
     }
 
     const [existing] = await pool.execute<RowDataPacket[]>('SELECT username FROM users WHERE user_id = ?', [id]);
