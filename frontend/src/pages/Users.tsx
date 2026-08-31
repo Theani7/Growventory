@@ -515,7 +515,8 @@ const Users = () => {
                   required
                   value={approveRoleId}
                   onChange={(e) => setApproveRoleId(e.target.value)}
-                  className="input-field"
+                  className="input-field disabled:bg-stone-100 disabled:text-stone-500"
+                  disabled={!!approveTarget.requested_role}
                 >
                   <option value="">Select role</option>
                   {roles.map((r) => (
@@ -524,7 +525,13 @@ const Users = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-ink-500 mt-1.5">The user will be notified once approved.</p>
+                {approveTarget.requested_role ? (
+                  <p className="text-xs text-amber-700 mt-1.5 flex items-center gap-1">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full" /> Requested role is locked for first approval — assigned as <span className="font-semibold capitalize">{approveTarget.requested_role}</span>.
+                  </p>
+                ) : (
+                  <p className="text-xs text-ink-500 mt-1.5">The user will be notified once approved.</p>
+                )}
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" onClick={() => setApproveTarget(null)} className="btn-secondary">Cancel</button>

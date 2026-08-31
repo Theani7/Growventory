@@ -69,7 +69,7 @@ const approveUser: RequestHandler = async (req, res) => {
     }
 
     const [users] = await pool.execute<RowDataPacket[]>(
-      'SELECT user_id, username, role_id FROM users WHERE user_id = ?',
+      'SELECT user_id, username, role_id, requested_role FROM users WHERE user_id = ?',
       [id]
     );
     if (users.length === 0) {
@@ -78,6 +78,18 @@ const approveUser: RequestHandler = async (req, res) => {
 
     if (users[0].role_id !== null) {
       return res.status(400).json({ success: false, message: 'User is not pending — already has a role assigned.' });
+    }
+
+    // Enforce requested role on first approval — admin cannot change it
+    if (users[0].requested_role) {
+      const requested = String(users[0].requested_role).toLowerCase();
+      const chosen = String(roles[0].role_name).toLowerCase();
+      if (requested !== chosen) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot change requested role on first approval. User requested "${users[0].requested_role}" but you tried to assign "${roles[0].role_name}".`
+        });
+      }
     }
 
     await pool.execute<ResultSetHeader>(
