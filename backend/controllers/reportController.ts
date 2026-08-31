@@ -89,7 +89,7 @@ const exportHealthLogsCSV: RequestHandler = async (req, res) => {
       SELECT hl.*, p.name as plant_name, u.username 
       FROM plant_health_logs hl
       JOIN plants p ON hl.plant_id = p.plant_id
-      JOIN users u ON hl.checked_by = u.user_id
+      LEFT JOIN users u ON hl.checked_by = u.user_id
       WHERE 1=1
     `;
     const params: any[] = [];

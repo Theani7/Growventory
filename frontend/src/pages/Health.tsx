@@ -203,7 +203,7 @@ const Health = () => {
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">Record Health Check</h2>
                 <p className="text-xs text-ink-500 mt-0.5">Log a plant health observation</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="btn-icon">
+              <button onClick={() => { setShowModal(false); setFormData({ plant_id: '', health_status: 'healthy', growth_stage: '', notes: '' }); }} className="btn-icon">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -245,7 +245,7 @@ const Health = () => {
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="input-field" rows={2} placeholder="Observations..." />
               </div>
               <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); setFormData({ plant_id: '', health_status: 'healthy', growth_stage: '', notes: '' }); }} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
                   {submitting ? 'Recording...' : 'Record'}
                 </button>

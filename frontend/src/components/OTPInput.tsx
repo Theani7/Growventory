@@ -57,8 +57,7 @@ const OTPInput = ({ value, onChange, length = 4, disabled }: OTPInputProps) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
     if (pasted) {
-      onChange(pasted.padEnd(length, '').slice(0, length));
-      // Focus last filled
+      onChange(pasted.slice(0, length));
       const nextIndex = Math.min(pasted.length, length - 1);
       inputsRef.current[nextIndex]?.focus();
     }
