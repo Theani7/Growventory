@@ -19,6 +19,7 @@ import Notifications from './pages/Notifications';
 import Users from './pages/Users';
 import Tasks from './pages/Tasks';
 import Logs from './pages/Logs';
+import Settings from './pages/Settings';
 
 // Everyone lands on the standard Overview
 const DashboardIndex = () => {
@@ -107,6 +108,9 @@ function App() {
             {/* Admin only */}
             <Route path="users" element={
               <RoleGuard allowedRoles={['admin']}><Users /></RoleGuard>
+            } />
+            <Route path="settings" element={
+              <RoleGuard allowedRoles={['admin']}><Settings /></RoleGuard>
             } />
           </Route>
 
