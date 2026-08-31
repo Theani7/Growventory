@@ -54,15 +54,15 @@ const seedAdmin = async () => {
     if (existing.length > 0) {
       console.log('⚠️  Admin user already exists. Updating password...');
       await pool.execute(
-        'UPDATE users SET password = ?, is_active = 1, role_id = 1 WHERE email = ? OR username = ?', 
+        'UPDATE users SET password = ?, is_active = 1, role_id = 1, is_email_verified = TRUE, email_verified_at = NOW() WHERE email = ? OR username = ?', 
         [hashedPassword, adminCredentials.email, adminCredentials.username]
       );
       console.log('✅ Admin password updated successfully!');
     } else {
-      // Insert admin user (role_id = 1 for Admin, is_active = 1)
+      // Insert admin user (role_id = 1 for Admin, is_active = 1, verified)
       await pool.execute(
-        `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active) 
-         VALUES (?, ?, ?, ?, ?, 1, 1)`,
+        `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active, is_email_verified, email_verified_at) 
+         VALUES (?, ?, ?, ?, ?, 1, 1, TRUE, NOW())`,
         [
           adminCredentials.username,
           adminCredentials.email,

@@ -21,8 +21,21 @@ const initTables = async () => {
     await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) UNIQUE, email VARCHAR(100) UNIQUE, password VARCHAR(255),
     full_name VARCHAR(100), phone VARCHAR(20), role_id INT, is_active BOOLEAN DEFAULT TRUE,
+    is_email_verified BOOLEAN DEFAULT FALSE, email_verified_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES roles(role_id))`);
+
+    // Ensure email verification columns exist for existing installations
+    try {
+      await conn.execute<ResultSetHeader>(`ALTER TABLE users ADD COLUMN is_email_verified BOOLEAN DEFAULT FALSE`);
+    } catch (e) {}
+    try {
+      await conn.execute<ResultSetHeader>(`ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMP NULL`);
+    } catch (e) {}
+    // Backfill: mark existing users with role as verified (optional — keeps old accounts usable)
+    try {
+      await conn.execute<ResultSetHeader>(`UPDATE users SET is_email_verified = TRUE WHERE role_id IS NOT NULL AND is_email_verified = FALSE`);
+    } catch (e) {}
 
     await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY, category_name VARCHAR(100), description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
@@ -88,6 +101,19 @@ const initTables = async () => {
     due_date DATE NULL, completed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (assigned_to) REFERENCES users(user_id), FOREIGN KEY (assigned_by) REFERENCES users(user_id))`);
+
+    await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS email_otps (
+    otp_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    purpose ENUM('email_verification','password_reset') NOT NULL,
+    expires_at DATETIME NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    attempts INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_purpose (email, purpose),
+    INDEX idx_expires_at (expires_at)
+    )`);
 
     await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS system_settings (
     setting_id INT AUTO_INCREMENT PRIMARY KEY,

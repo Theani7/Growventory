@@ -17,7 +17,7 @@ const resetAdmin = async () => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await pool.execute(
-      'UPDATE users SET password = ?, is_active = 1, role_id = 1 WHERE username = "admin" OR email = "admin@growventory.com"',
+      'UPDATE users SET password = ?, is_active = 1, role_id = 1, is_email_verified = TRUE, email_verified_at = NOW() WHERE username = "admin" OR email = "admin@growventory.com"',
       [hashedPassword]
     );
 
