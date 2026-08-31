@@ -179,28 +179,77 @@ const updatePlant: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const { name, scientific_name, category_id, description, current_stock, min_stock_threshold, health_status, growth_stage, location, purchase_price, selling_price, is_active } = req.body;
 
-    const [existing] = await pool.execute<RowDataPacket[]>('SELECT * FROM plants WHERE plant_id = ?', [id]);
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM plants WHERE plant_id = ? FOR UPDATE', [id]);
 
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Plant not found.'
-      });
+      if (existingRows.length === 0) {
+        await conn.rollback();
+        return res.status(404).json({
+          success: false,
+          message: 'Plant not found.'
+        });
+      }
+      const existingPlant = existingRows[0];
+
+      const image_url = req.file ? `/uploads/${req.file.filename}` : existingPlant.image_url;
+
+      if (current_stock !== undefined) {
+        await conn.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'Direct update of current_stock is not allowed. Please use the Stock Management module.'
+        });
+      }
+
+      // RBAC: staff can only update health/growth/location/description/image
+      const role = (req.user?.role_name || '').toLowerCase();
+      if (role === 'staff') {
+        const forbidden = [];
+        if (purchase_price !== undefined && purchase_price != existingPlant.purchase_price) forbidden.push('purchase_price');
+        if (selling_price !== undefined && selling_price != existingPlant.selling_price) forbidden.push('selling_price');
+        if (category_id !== undefined && category_id != existingPlant.category_id) forbidden.push('category_id');
+        if (is_active !== undefined && is_active != existingPlant.is_active) forbidden.push('is_active');
+        if (name !== undefined && name !== existingPlant.name) forbidden.push('name');
+        if (min_stock_threshold !== undefined && min_stock_threshold != existingPlant.min_stock_threshold) forbidden.push('min_stock_threshold');
+        if (forbidden.length > 0) {
+          await conn.rollback();
+          return res.status(403).json({ success: false, message: `Staff cannot update: ${forbidden.join(', ')}` });
+        }
+      }
+
+      // Validate health_status enum
+      if (health_status !== undefined) {
+        const allowed = ['healthy', 'under_observation', 'poor', 'critical'];
+        if (!allowed.includes(String(health_status))) {
+          await conn.rollback();
+          return res.status(400).json({ success: false, message: 'Invalid health_status.' });
+        }
+      }
+
+      // Handle is_active only for admin
+      let newIsActive = existingPlant.is_active;
+      if (is_active !== undefined) {
+        if (role !== 'admin') {
+          await conn.rollback();
+          return res.status(403).json({ success: false, message: 'Only admin can change is_active.' });
+        }
+        newIsActive = is_active;
+      }
+
+      await conn.execute<ResultSetHeader>(
+        `UPDATE plants SET name = ?, scientific_name = ?, category_id = ?, description = ?, image_url = ?, min_stock_threshold = ?, health_status = ?, growth_stage = ?, location = ?, purchase_price = ?, selling_price = ?, is_active = ? WHERE plant_id = ?`,
+        [name || existingPlant.name, scientific_name === '' ? null : scientific_name ?? existingPlant.scientific_name, category_id ?? existingPlant.category_id, description === '' ? null : description ?? existingPlant.description, image_url, min_stock_threshold ?? existingPlant.min_stock_threshold, health_status || existingPlant.health_status, growth_stage === '' ? null : growth_stage ?? existingPlant.growth_stage, location === '' ? null : location ?? existingPlant.location, purchase_price ?? existingPlant.purchase_price, selling_price ?? existingPlant.selling_price, newIsActive, id]
+      );
+
+      await conn.commit();
+    } catch (txErr: any) {
+      try { await conn.rollback(); } catch {}
+      throw txErr;
+    } finally {
+      conn.release();
     }
-
-    const image_url = req.file ? `/uploads/${req.file.filename}` : existing[0].image_url;
-
-    if (current_stock !== undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Direct update of current_stock is not allowed. Please use the Stock Management module.'
-      });
-    }
-
-    await pool.execute<ResultSetHeader>(
-      `UPDATE plants SET name = ?, scientific_name = ?, category_id = ?, description = ?, image_url = ?, min_stock_threshold = ?, health_status = ?, growth_stage = ?, location = ?, purchase_price = ?, selling_price = ?, is_active = ? WHERE plant_id = ?`,
-      [name || existing[0].name, scientific_name === '' ? null : scientific_name ?? existing[0].scientific_name, category_id ?? existing[0].category_id, description === '' ? null : description ?? existing[0].description, image_url, min_stock_threshold ?? existing[0].min_stock_threshold, health_status || existing[0].health_status, growth_stage === '' ? null : growth_stage ?? existing[0].growth_stage, location === '' ? null : location ?? existing[0].location, purchase_price ?? existing[0].purchase_price, selling_price ?? existing[0].selling_price, is_active !== undefined ? is_active : existing[0].is_active, id]
-    );
 
     const [updated] = await pool.execute<RowDataPacket[]>(
       `SELECT p.*, c.category_name FROM plants p LEFT JOIN categories c ON p.category_id = c.category_id WHERE p.plant_id = ?`,

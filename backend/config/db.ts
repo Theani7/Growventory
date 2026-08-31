@@ -41,7 +41,10 @@ const initTables = async () => {
     } catch (e) {}
 
     await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS categories (
-    category_id INT AUTO_INCREMENT PRIMARY KEY, category_name VARCHAR(100), description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+    category_id INT AUTO_INCREMENT PRIMARY KEY, category_name VARCHAR(100) UNIQUE, description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+    try {
+      await conn.execute<ResultSetHeader>(`ALTER TABLE categories ADD UNIQUE (category_name)`);
+    } catch (e) {}
 
     await conn.execute<ResultSetHeader>(`CREATE TABLE IF NOT EXISTS plants (
     plant_id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), scientific_name VARCHAR(150), category_id INT,

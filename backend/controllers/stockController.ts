@@ -5,17 +5,13 @@ import { pool } from '../config/db';
 import { notifyAdminsAndSupervisors, createNotification } from './notificationController';
 import stockService from '../services/stockService';
 
-// Helper, read a system setting (returns string or default)
+// Helper, read a system setting (returns string or default) — throws on DB error to avoid silent fallback
 const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
-  try {
-    const [rows] = await pool.execute<RowDataPacket[]>(
-      'SELECT setting_value FROM system_settings WHERE setting_key = ?',
-      [key]
-    );
-    return rows.length ? rows[0].setting_value : defaultValue;
-  } catch {
-    return defaultValue;
-  }
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    'SELECT setting_value FROM system_settings WHERE setting_key = ?',
+    [key]
+  );
+  return rows.length ? rows[0].setting_value : defaultValue;
 };
 
 // Get all stock movements with optional filters (plant, type, status)
@@ -137,12 +133,12 @@ const createMovement: RequestHandler = async (req, res) => {
       });
     }
 
-    const qty = parseInt(quantity);
-    if (isNaN(qty) || qty <= 0) {
+    const qty = Number(quantity);
+    if (!Number.isInteger(qty) || (type === 'ADJUSTMENT' ? qty < 0 : qty <= 0)) {
       await connection.rollback();
       return res.status(400).json({
         success: false,
-        message: 'Quantity must be greater than 0.'
+        message: type === 'ADJUSTMENT' ? 'Quantity must be 0 or greater.' : 'Quantity must be greater than 0.'
       });
     }
 
@@ -191,7 +187,7 @@ const createMovement: RequestHandler = async (req, res) => {
 
     // Approval policy: staff requires approval if setting is on; supervisor/admin auto-approve
     const approvalRequired = await getSetting('require_stock_approval', 'false');
-    const needsApproval = approvalRequired === 'true' && role === 'staff';
+    const needsApproval = approvalRequired === 'true' && String(role).toLowerCase() === 'staff';
 
     let movementId: number | string | null;
     let final_new_stock: number;
@@ -217,50 +213,53 @@ const createMovement: RequestHandler = async (req, res) => {
           `Stock ${type.toLowerCase()}: ${plant.name} - ${type === 'ADJUSTMENT' ? `set to ${qty}` : qty} (${previous_stock} → ${final_new_stock})`]
       );
 
-      // Notify admins/supervisors of new stock movement (if created by staff - though here needsApproval is false)
-      // If a supervisor/admin does it, we might still want to notify others?
-      if (role === 'staff') {
-        await notifyAdminsAndSupervisors(
-          'Stock Movement Recorded',
-          `${req.user!.username} recorded a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}" (${previous_stock} → ${final_new_stock}).`,
-          'system'
+      // For post-commit notifications
+      let postCommitNotifs: Array<{title:string, message:string, type:string}> = [];
+      if (!needsApproval) {
+        if (role === 'staff') {
+          postCommitNotifs.push({
+            title: 'Stock Movement Recorded',
+            message: `${req.user!.username} recorded a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}" (${previous_stock} → ${final_new_stock}).`,
+            type: 'system'
+          });
+        }
+        if (final_new_stock <= plant.min_stock_threshold) {
+          postCommitNotifs.push({
+            title: 'Low Stock Alert',
+            message: `${plant.name} is low on stock: ${final_new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
+            type: 'low_stock'
+          });
+        }
+      } else {
+        // Pending approval, insert movement record manually as 'pending'
+        const [movementResult] = await connection.execute<ResultSetHeader>(
+          `INSERT INTO stock_movements 
+            (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+          [plant_id, type, qty, previous_stock, new_stock, notes || null, user_id]
         );
-      }
 
-      // Low-stock alert
-      if (final_new_stock <= plant.min_stock_threshold) {
-        await notifyAdminsAndSupervisors(
-          'Low Stock Alert',
-          `${plant.name} is low on stock: ${final_new_stock} units remaining (threshold: ${plant.min_stock_threshold})`,
-          'low_stock'
+        movementId = movementResult.insertId;
+
+        await connection.execute<ResultSetHeader>(
+          `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
+            `Pending ${type.toLowerCase()} of ${qty} for ${plant.name}, awaiting supervisor approval`]
         );
+
+        postCommitNotifs.push({
+          title: 'Stock Movement Awaiting Approval',
+          message: `${req.user!.username} requested a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}". Review and approve.`,
+          type: 'approval'
+        });
       }
-    } else {
-      // Pending approval, insert movement record manually as 'pending'
-      const [movementResult] = await connection.execute<ResultSetHeader>(
-        `INSERT INTO stock_movements 
-          (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [plant_id, type, qty, previous_stock, new_stock, notes || null, user_id]
-      );
-
-      movementId = movementResult.insertId;
-
-      await connection.execute<ResultSetHeader>(
-        `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
-          `Pending ${type.toLowerCase()} of ${qty} for ${plant.name}, awaiting supervisor approval`]
-      );
-
-      await notifyAdminsAndSupervisors(
-        'Stock Movement Awaiting Approval',
-        `${req.user!.username} requested a ${type.toLowerCase()} of ${qty} unit(s) for "${plant.name}". Review and approve.`,
-        'approval'
-      );
-    }
 
     await connection.commit();
+    // Send notifications only after successful commit to avoid ghosts
+    for (const n of postCommitNotifs) {
+      try { await notifyAdminsAndSupervisors(n.title, n.message, n.type); } catch {}
+    }
 
     const [newMovement] = await pool.execute<RowDataPacket[]>(
       `SELECT sm.*, p.name as plant_name, u.username as created_by_name 
