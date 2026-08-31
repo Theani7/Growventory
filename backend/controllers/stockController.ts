@@ -160,7 +160,7 @@ const createMovement: RequestHandler = async (req, res) => {
       });
     }
 
-    if (!plants[0].is_active) {
+    if (plants[0].is_active === 0 || plants[0].is_active === false) {
       await connection.rollback();
       return res.status(400).json({
         success: false,
