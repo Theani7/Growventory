@@ -123,7 +123,6 @@ const Register = () => {
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input type="text" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="Jane Doe" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
                 </div>
-                <p className="mt-1 text-xs text-stone-500">How others will see you</p>
               </div>
 
               <div>
@@ -132,7 +131,6 @@ const Register = () => {
                   <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input type="text" required className="w-full pl-10 pr-3 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e]" placeholder="janedoe" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
                 </div>
-                <p className="mt-1 text-xs text-stone-500">Used to sign in • 3–20 characters</p>
               </div>
 
               <div>
