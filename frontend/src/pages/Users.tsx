@@ -327,9 +327,10 @@ const Users = () => {
                         <tr key={u.user_id} className={isPending ? 'bg-amber-50/40' : ''}>
                           <td className="whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-xl overflow-hidden border shadow-sm flex-shrink-0 ${isPending ? 'border-amber-200 bg-amber-50' : 'border-[#d6ead6] bg-[#eef6ee]'}`}>
-                                <Avatar username={u.username} size={40} className="w-full h-full" variant={isPending ? 'initials' : 'adventurer'} />
-                              </div>
+                              <Avatar
+                                username={u.username}
+                                className={`w-10 h-10 rounded-xl border shadow-sm flex-shrink-0 text-sm ${isPending ? '!bg-amber-50 !border-amber-200 !text-amber-700' : ''}`}
+                              />
                               <div className="min-w-0">
                                 <p className="font-bold text-ink-900 truncate">{u.username}</p>
                                 {u.full_name && <p className="text-xs text-ink-500 truncate">{u.full_name}</p>}
