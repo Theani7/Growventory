@@ -3,7 +3,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import { testConnection } from './config/db';
 
 // Import routes
@@ -39,14 +38,6 @@ app.use(cors({
   credentials: true
 }));
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { success: false, message: 'Too many login attempts, please try again later.' }
-});
-
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
