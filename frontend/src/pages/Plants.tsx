@@ -166,9 +166,6 @@ const Plants = () => {
   };
 
   const resetForm = () => {
-    if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(formData.imagePreview);
-    }
     setFormData({
       name: '', scientific_name: '', category_id: '', current_stock: 0,
       min_stock_threshold: 0, purchase_price: '', selling_price: '', location: '', description: '', image: null,
@@ -655,9 +652,6 @@ const Plants = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
-                            URL.revokeObjectURL(formData.imagePreview);
-                          }
                           setFormData({ ...formData, image: null, imagePreview: null });
                         }}
                         className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
@@ -688,11 +682,6 @@ const Plants = () => {
                           toast.error('Image too large. Maximum size is 5MB.');
                           e.target.value = '';
                           return;
-                        }
-                        
-                        // Clean up old preview if it was a blob
-                        if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
-                          URL.revokeObjectURL(formData.imagePreview);
                         }
                         
                         setFormData({
