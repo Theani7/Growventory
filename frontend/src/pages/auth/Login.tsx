@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, User, Lock, ArrowRight, Loader2, ChevronLeft, Sparkles, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, ArrowRight, Loader2, ChevronLeft, Sparkles, CheckCircle2, AlertCircle, Clock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,10 +15,14 @@ const Login = () => {
   const [errorCode, setErrorCode] = useState('');
   const [formData, setFormData] = useState({ username: '', password: '' });
 
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [isResending, setIsResending] = useState(false);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setErrorCode('');
+    setVerifyEmail('');
     
     if (!formData.username || !formData.password) {
       setError('Please fill in all fields');
@@ -32,15 +38,38 @@ const Login = () => {
         setError(result.message || 'Login failed');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid username or password');
-      setErrorCode(err.response?.data?.code || '');
+      const msg = err.response?.data?.message || 'Invalid username or password';
+      const code = err.response?.data?.code || '';
+      setError(msg);
+      setErrorCode(code);
+      if (code === 'EMAIL_NOT_VERIFIED') {
+        const emailFromResp = err.response?.data?.data?.email || formData.username;
+        setVerifyEmail(emailFromResp);
+        // Store for verify page
+        localStorage.setItem('pendingVerificationEmail', emailFromResp);
+        // Auto-send fresh code if desired
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!verifyEmail) return;
+    setIsResending(true);
+    try {
+      const { data } = await api.post('/auth/send-verification-otp', { email: verifyEmail });
+      toast.success(data.message || 'Verification code sent');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to resend code');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const isPending = errorCode === 'PENDING_APPROVAL';
   const isDisabled = errorCode === 'ACCOUNT_DISABLED';
+  const isNeedVerify = errorCode === 'EMAIL_NOT_VERIFIED';
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -76,7 +105,34 @@ const Login = () => {
 
           {/* Error Message */}
           {error && (
-            isPending ? (
+            isNeedVerify ? (
+              <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-blue-700" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-900">Verify your email</p>
+                    <p className="text-sm text-blue-800 mt-0.5">{error}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(verifyEmail)}`)}
+                    className="flex-1 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Enter code
+                  </button>
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={isResending}
+                    className="px-4 py-2 text-sm font-semibold bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Resend code
+                  </button>
+                </div>
+              </div>
+            ) : isPending ? (
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
                 <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Clock className="w-4 h-4 text-amber-700" />
@@ -153,11 +209,12 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Remember */}
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-forest-700 focus:ring-forest-500" />
-              <span className="text-sm text-gray-600">Remember me for 30 days</span>
-            </label>
+            {/* Forgot password */}
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm font-semibold text-forest-700 hover:text-forest-800">
+                Forgot password?
+              </Link>
+            </div>
 
             {/* Submit */}
             <button

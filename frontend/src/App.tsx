@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleGuard from './components/RoleGuard';
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import VerifyEmail from './pages/auth/VerifyEmail';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import DashboardLayout from './components/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
 import Plants from './pages/Plants';
@@ -16,7 +18,6 @@ import Reports from './pages/Reports';
 import Notifications from './pages/Notifications';
 import Users from './pages/Users';
 import Tasks from './pages/Tasks';
-import Settings from './pages/Settings';
 import Logs from './pages/Logs';
 
 // Everyone lands on the standard Overview
@@ -61,6 +62,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected dashboard routes */}
           <Route
@@ -104,9 +107,6 @@ function App() {
             {/* Admin only */}
             <Route path="users" element={
               <RoleGuard allowedRoles={['admin']}><Users /></RoleGuard>
-            } />
-            <Route path="settings" element={
-              <RoleGuard allowedRoles={['admin']}><Settings /></RoleGuard>
             } />
           </Route>
 

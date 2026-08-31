@@ -39,13 +39,11 @@ const Register = () => {
         // role_id intentionally omitted — assigned by admin on approval
       });
       if (data.success) {
-        const isPending = data.data?.pending !== false;
-        if (isPending) {
-          setSubmitted({ pending: true, username: formData.username });
-        } else {
-          toast.success('Account created. You can sign in now.');
-          navigate('/login');
-        }
+        const email = formData.email;
+        // Store for verification page
+        localStorage.setItem('pendingVerificationEmail', email);
+        toast.success('Account created. Check your email for a 4-digit verification code.');
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
       } else {
         toast.error(data.message || 'Registration failed');
       }
