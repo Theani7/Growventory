@@ -148,7 +148,7 @@ const createMovement: RequestHandler = async (req, res) => {
 
     // Lock plant row
     const [plants] = await connection.execute<RowDataPacket[]>(
-      'SELECT plant_id, name, current_stock, min_stock_threshold FROM plants WHERE plant_id = ? FOR UPDATE',
+      'SELECT plant_id, name, current_stock, min_stock_threshold, is_active FROM plants WHERE plant_id = ? FOR UPDATE',
       [plant_id]
     );
 
@@ -157,6 +157,14 @@ const createMovement: RequestHandler = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Plant not found.'
+      });
+    }
+
+    if (!plants[0].is_active) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot record stock movement for a deleted plant.'
       });
     }
 

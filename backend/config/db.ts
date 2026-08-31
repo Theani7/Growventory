@@ -147,13 +147,16 @@ const initTables = async () => {
 };
 
 const testConnection = async () => {
+  let conn: any;
   try {
-    await pool.getConnection();
+    conn = await pool.getConnection();
     console.log('✅ MySQL connected successfully');
     await initTables();
   } catch (error: any) {
     console.error('❌ MySQL connection failed:', error.message);
     process.exit(1);
+  } finally {
+    if (conn) conn.release();
   }
 };
 

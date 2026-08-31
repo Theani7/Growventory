@@ -43,10 +43,12 @@ const createAndSendOTP = async (email: string, purpose: 'email_verification' | '
   const otpHash = await hashOTP(otp);
   const expiresAt = getExpiryDate();
 
-  // Invalidate previous unverified OTPs for same purpose? Keep them but they'll be superseded by latest
-  // Optionally delete expired
+  // Invalidate previous unverified OTPs for same email/purpose to prevent brute-force across multiple OTPs
   try {
-    await pool.execute(`DELETE FROM email_otps WHERE expires_at < NOW()`);
+    await pool.execute(`DELETE FROM email_otps WHERE email = ? AND purpose = ? AND verified = FALSE`, [email, purpose]);
+  } catch {}
+  try {
+    await pool.execute(`DELETE FROM email_otps WHERE expires_at < NOW() LIMIT 100`);
   } catch {}
 
   await pool.execute<ResultSetHeader>(
@@ -54,7 +56,7 @@ const createAndSendOTP = async (email: string, purpose: 'email_verification' | '
     [email, otpHash, purpose, expiresAt]
   );
 
-  // Send email (non-blocking failure)
+  // Send email — log only that OTP was created, never the code itself
   try {
     if (purpose === 'email_verification') {
       await sendVerificationEmail(email, otp, username);
@@ -63,18 +65,9 @@ const createAndSendOTP = async (email: string, purpose: 'email_verification' | '
     }
   } catch (err: any) {
     console.error(`Failed to send ${purpose} OTP to ${email}:`, err.message);
-    // In dev, log OTP to console so testing still works
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV OTP ${purpose}] ${email} => ${otp} (expires ${expiresAt.toISOString()})`);
-    }
-    // Don't fail request, OTP is stored; user can still verify if email misconfigured and dev sees logs
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[OTP] ${purpose} for ${email}: ${otp} (expires ${expiresAt.toISOString()})`);
-  }
-
-  return otp; // returned only for dev logging, never sent to client except in dev response
+  return otp;
 };
 
 const verifyOTPInternal = async (email: string, otp: string, purpose: 'email_verification' | 'password_reset'): Promise<{ ok: boolean; message?: string; otpId?: number }> => {
@@ -344,7 +337,7 @@ const login: RequestHandler = async (req, res) => {
   }
 };
 
-// Send email verification OTP
+// Send email verification OTP - generic response to prevent enumeration
 const sendVerificationOTP: RequestHandler = async (req, res) => {
   try {
     const { email } = req.body;
@@ -353,26 +346,36 @@ const sendVerificationOTP: RequestHandler = async (req, res) => {
     if (!emailRegex.test(email)) return res.status(400).json({ success: false, message: 'Invalid email format.' });
 
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id, username, is_email_verified FROM users WHERE email = ?`, [email]);
-    if (users.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email.' });
-    const user = users[0] as any;
-    if (user.is_email_verified) return res.status(400).json({ success: false, message: 'Email is already verified. You can sign in.' });
-
+    // Always apply cooldown check even for non-existent to prevent timing leak - use dummy if no user
     const { allowed, waitSeconds } = await canResendOTP(email, 'email_verification');
-    if (!allowed) return res.status(429).json({ success: false, message: `Please wait ${waitSeconds}s before requesting a new code.` });
+    if (!allowed) {
+      // Return generic even for cooldown to avoid leaking existence via 429 difference
+      // For security, still return 429 but with generic message ( enumeration via 429 is acceptable trade-off for abuse prevention)
+      return res.status(429).json({ success: false, message: `Please wait ${waitSeconds}s before requesting a new code.` });
+    }
+
+    if (users.length === 0) {
+      await new Promise(r => setTimeout(r, 500));
+      return res.json({ success: true, message: 'If an account exists and needs verification, a code has been sent. Please check your email.' });
+    }
+    const user = users[0] as any;
+    if (user.is_email_verified) {
+      await new Promise(r => setTimeout(r, 500));
+      return res.json({ success: true, message: 'If an account exists and needs verification, a code has been sent. Please check your email.' });
+    }
 
     await createAndSendOTP(email, 'email_verification', user.username);
 
     res.json({
       success: true,
-      message: 'Verification code sent. Please check your email (including spam folder). Valid for 10 minutes.',
-      data: process.env.NODE_ENV === 'development' ? { devNote: 'Code logged to server console if email not configured' } : undefined
+      message: 'Verification code sent. Please check your email (including spam folder). Valid for 10 minutes.'
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to send verification code.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
-// Verify email with OTP
+// Verify email with OTP - generic errors to prevent enumeration
 const verifyEmail: RequestHandler = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -380,9 +383,9 @@ const verifyEmail: RequestHandler = async (req, res) => {
     if (!/^\d{4}$/.test(otp)) return res.status(400).json({ success: false, message: 'Code must be 4 digits.' });
 
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id, is_email_verified FROM users WHERE email = ?`, [email]);
-    if (users.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email.' });
+    if (users.length === 0) return res.status(400).json({ success: false, message: 'Invalid or expired code. Please request a new one.' });
     const user = users[0] as any;
-    if (user.is_email_verified) return res.status(400).json({ success: false, message: 'Email is already verified.' });
+    if (user.is_email_verified) return res.status(400).json({ success: false, message: 'Invalid or expired code. Please request a new one.' });
 
     const result = await verifyOTPInternal(email, otp, 'email_verification');
     if (!result.ok) return res.status(400).json({ success: false, message: result.message });
@@ -428,19 +431,22 @@ const forgotPassword: RequestHandler = async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return res.status(400).json({ success: false, message: 'Invalid email format.' });
 
-    // Always return generic success to prevent enumeration, but only send if user exists
+    // Constant-time generic handling to prevent enumeration
+    const { allowed, waitSeconds } = await canResendOTP(email, 'password_reset');
+    if (!allowed) return res.status(429).json({ success: false, message: `Please wait ${waitSeconds}s before requesting a new code.` });
+
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id, username FROM users WHERE email = ?`, [email]);
+    const start = Date.now();
     if (users.length === 0) {
-      // Simulate delay to prevent timing attack
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 600 - Math.min(600, Date.now() - start)));
       return res.json({ success: true, message: 'If an account exists with this email, a reset code has been sent. Please check your inbox.' });
     }
     const user = users[0] as any;
 
-    const { allowed, waitSeconds } = await canResendOTP(email, 'password_reset');
-    if (!allowed) return res.status(429).json({ success: false, message: `Please wait ${waitSeconds}s before requesting a new code.` });
-
     await createAndSendOTP(email, 'password_reset', user.username);
+    // Ensure constant time for existent vs non-existent
+    const elapsed = Date.now() - start;
+    if (elapsed < 600) await new Promise(r => setTimeout(r, 600 - elapsed));
 
     res.json({ success: true, message: 'If an account exists with this email, a 4-digit reset code has been sent. Valid for 10 minutes.' });
   } catch (error: any) {
@@ -448,16 +454,16 @@ const forgotPassword: RequestHandler = async (req, res) => {
   }
 };
 
-// Verify reset OTP (optional step for UI to validate before showing new password fields)
+// Verify reset OTP (optional step) - generic errors to prevent enumeration
 const verifyResetOTP: RequestHandler = async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and 4-digit code are required.' });
     if (!/^\d{4}$/.test(otp)) return res.status(400).json({ success: false, message: 'Code must be 4 digits.' });
 
-    // Check user exists
+    // Check user exists - generic error to prevent enumeration
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id FROM users WHERE email = ?`, [email]);
-    if (users.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email.' });
+    if (users.length === 0) return res.status(400).json({ success: false, message: 'Invalid or expired code. Please request a new one.' });
 
     // Look for valid OTP (don't mark verified yet? For step validation, we mark but keep for reset)
     const [rows] = await pool.execute<RowDataPacket[]>(
@@ -493,7 +499,7 @@ const resetPassword: RequestHandler = async (req, res) => {
     if (!isStrongPassword(newPassword)) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' });
 
     const [users] = await pool.execute<RowDataPacket[]>(`SELECT user_id FROM users WHERE email = ?`, [email]);
-    if (users.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email.' });
+    if (users.length === 0) return res.status(400).json({ success: false, message: 'Invalid or expired code. Please request a new one.' });
     const user = users[0] as any;
 
     // Find OTP: either verified recently (within expiry) OR unverified but valid

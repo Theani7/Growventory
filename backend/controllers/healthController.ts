@@ -224,12 +224,19 @@ const updateHealthLog: RequestHandler = async (req, res) => {
       [newStatus, newGrowthStage, newNotes, id]
     );
 
-    // Also update plant if status changed
+    // Also update plant only if editing the latest log for this plant
     if (health_status) {
-      await pool.execute<ResultSetHeader>(
-        'UPDATE plants SET health_status = ?, growth_stage = ?, last_health_check = CURRENT_TIMESTAMP WHERE plant_id = ?',
-        [newStatus, newGrowthStage, log.plant_id]
+      const [latest] = await pool.execute<RowDataPacket[]>(
+        'SELECT MAX(log_id) as maxId FROM plant_health_logs WHERE plant_id = ?',
+        [log.plant_id]
       );
+      const maxId = latest[0]?.maxId;
+      if (maxId != null && String(maxId) === String(id)) {
+        await pool.execute<ResultSetHeader>(
+          'UPDATE plants SET health_status = ?, growth_stage = ?, last_health_check = CURRENT_TIMESTAMP WHERE plant_id = ?',
+          [newStatus, newGrowthStage, log.plant_id]
+        );
+      }
     }
 
     const [updated] = await pool.execute<RowDataPacket[]>(

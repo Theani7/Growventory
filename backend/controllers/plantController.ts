@@ -270,7 +270,6 @@ const importPlants: RequestHandler = async (req, res) => {
   const connection: PoolConnection = await pool.getConnection();
   try {
     if (!req.file) {
-      connection.release();
       return res.status(400).json({
         success: false,
         message: 'No file uploaded.'
@@ -279,7 +278,6 @@ const importPlants: RequestHandler = async (req, res) => {
 
     // Validate file type
     if (!req.file.originalname.toLowerCase().endsWith('.csv')) {
-      connection.release();
       return res.status(400).json({
         success: false,
         message: 'Only CSV files are allowed.'
@@ -290,7 +288,6 @@ const importPlants: RequestHandler = async (req, res) => {
     const lines = csvContent.split('\n').filter(line => line.trim());
 
     if (lines.length < 2) {
-      connection.release();
       return res.status(400).json({
         success: false,
         message: 'CSV file is empty or has no data rows.'
@@ -332,7 +329,6 @@ const importPlants: RequestHandler = async (req, res) => {
     // Validate headers
     for (const required of requiredHeaders) {
       if (!headers.includes(required)) {
-        connection.release();
         return res.status(400).json({
           success: false,
           message: `Missing required column: ${required}`

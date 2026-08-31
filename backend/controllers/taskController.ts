@@ -186,12 +186,12 @@ const updateTask: RequestHandler = async (req, res) => {
       [req.user!.user_id, 'UPDATE', 'tasks', id, `Updated task: ${title}`]
     );
 
-    // Notify new assignee if reassigned
-    if (oldAssignee !== assigned_to) {
+    // Notify new assignee only if explicitly reassigned
+    if (assigned_to !== undefined && assigned_to !== null && oldAssignee !== assigned_to) {
       await createNotification(
         assigned_to,
         'Task Assigned to You',
-        `You have been assigned task: ${title}`,
+        `You have been assigned task: ${title ?? existing[0].title}`,
         'system'
       );
     }

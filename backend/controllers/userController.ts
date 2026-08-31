@@ -267,9 +267,14 @@ const createUser: RequestHandler = async (req, res) => {
       }
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(email))) return res.status(400).json({ success: false, message: 'Invalid email format.' });
+    const [roleCheck] = await pool.execute<RowDataPacket[]>(`SELECT role_id FROM roles WHERE role_id = ?`, [role_id]);
+    if (roleCheck.length === 0) return res.status(400).json({ success: false, message: 'Invalid role.' });
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.execute<ResultSetHeader>(
-      `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+      `INSERT INTO users (username, email, password, full_name, phone, role_id, is_active, is_email_verified, email_verified_at) VALUES (?, ?, ?, ?, ?, ?, 1, TRUE, NOW())`,
       [username, email, hashedPassword, full_name || null, phone || null, role_id]
     );
 
@@ -288,14 +293,15 @@ const createUser: RequestHandler = async (req, res) => {
   }
 };
 
-// Update user
+// Update user — only provided fields, validates each, never demotes to pending via null role
 const updateUser: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const { username, email, full_name, phone, role_id, is_active } = req.body;
 
-    const [existing] = await pool.execute<RowDataPacket[]>('SELECT username FROM users WHERE user_id = ?', [id]);
-    if (existing.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+    const [existingRows] = await pool.execute<RowDataPacket[]>('SELECT username, email, role_id FROM users WHERE user_id = ?', [id]);
+    if (existingRows.length === 0) return res.status(404).json({ success: false, message: 'User not found.' });
+    const existing = existingRows[0] as any;
 
     if (phone && String(phone).trim() !== '') {
       const phoneStr = String(phone).trim();
@@ -305,11 +311,44 @@ const updateUser: RequestHandler = async (req, res) => {
       }
     }
 
-    await pool.execute<ResultSetHeader>(
-      `UPDATE users SET username = ?, email = ?, full_name = ?, phone = ?, role_id = ?, is_active = ?
-       WHERE user_id = ?`,
-      [username, email, full_name || null, phone || null, role_id || null, is_active ? 1 : 0, id]
-    );
+    // Validate email if provided
+    if (email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(String(email))) return res.status(400).json({ success: false, message: 'Invalid email format.' });
+      if (String(email).toLowerCase() !== String(existing.email).toLowerCase()) {
+        const [dup] = await pool.execute<RowDataPacket[]>(`SELECT user_id FROM users WHERE email = ? AND user_id != ?`, [email, id]);
+        if (dup.length > 0) return res.status(409).json({ success: false, message: 'Email already exists.' });
+      }
+    }
+    if (username !== undefined && String(username).toLowerCase() !== String(existing.username).toLowerCase()) {
+      const [dup] = await pool.execute<RowDataPacket[]>(`SELECT user_id FROM users WHERE username = ? AND user_id != ?`, [username, id]);
+      if (dup.length > 0) return res.status(409).json({ success: false, message: 'Username already exists.' });
+    }
+
+    // Validate role if provided — must exist, never allow null demotion via this route
+    let validatedRoleId: number | undefined = undefined;
+    if (role_id !== undefined) {
+      if (role_id === null || role_id === '') {
+        return res.status(400).json({ success: false, message: 'Role cannot be empty. Use approve/reject for pending users.' });
+      }
+      const [roles] = await pool.execute<RowDataPacket[]>(`SELECT role_id FROM roles WHERE role_id = ?`, [role_id]);
+      if (roles.length === 0) return res.status(400).json({ success: false, message: 'Invalid role.' });
+      validatedRoleId = Number(role_id);
+    }
+
+    // Build dynamic SET
+    const fields: string[] = [];
+    const values: any[] = [];
+    if (username !== undefined) { fields.push('username = ?'); values.push(String(username).trim()); }
+    if (email !== undefined) { fields.push('email = ?'); values.push(String(email).trim()); }
+    if (full_name !== undefined) { fields.push('full_name = ?'); values.push(full_name ? String(full_name).trim() : null); }
+    if (phone !== undefined) { fields.push('phone = ?'); values.push(phone ? String(phone).trim() : null); }
+    if (validatedRoleId !== undefined) { fields.push('role_id = ?'); values.push(validatedRoleId); }
+    if (is_active !== undefined) { fields.push('is_active = ?'); values.push(is_active ? 1 : 0); }
+    if (fields.length === 0) return res.status(400).json({ success: false, message: 'No fields to update.' });
+
+    values.push(id);
+    await pool.execute<ResultSetHeader>(`UPDATE users SET ${fields.join(', ')} WHERE user_id = ?`, values);
 
     await pool.execute<ResultSetHeader>(
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
