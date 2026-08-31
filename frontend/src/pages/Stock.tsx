@@ -364,8 +364,8 @@ const Stock = () => {
                           {sMeta.label}
                         </span>
                       </td>
-                      <td className="text-ink-700">{m.created_by_name || '—'}</td>
-                      <td className="text-ink-500">{m.approved_by_name || '—'}</td>
+                      <td className="text-ink-700">{m.created_by_name || '-'}</td>
+                      <td className="text-ink-500">{m.approved_by_name || '-'}</td>
                       <td className="text-ink-500 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-ink-400" />

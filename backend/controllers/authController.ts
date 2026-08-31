@@ -7,7 +7,7 @@ import { notifyAdminsAndSupervisors } from './notificationController';
 import { generateOTP, hashOTP, verifyOTP, getExpiryDate, OTP_MAX_ATTEMPTS, OTP_RESEND_COOLDOWN_SECONDS } from '../utils/otp';
 import { sendVerificationOTP as sendVerificationEmail, sendPasswordResetOTP as sendPasswordResetEmail } from '../services/emailService';
 
-// Helper — read a system setting
+// Helper, read a system setting
 const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
   try {
     const [rows] = await pool.execute<RowDataPacket[]>(
@@ -64,7 +64,7 @@ const createAndSendOTP = async (email: string, purpose: 'email_verification' | '
     if (process.env.NODE_ENV === 'development') {
       console.log(`[DEV OTP ${purpose}] ${email} => ${otp} (expires ${expiresAt.toISOString()})`);
     }
-    // Don't fail request — OTP is stored; user can still verify if email misconfigured and dev sees logs
+    // Don't fail request, OTP is stored; user can still verify if email misconfigured and dev sees logs
   }
 
   if (process.env.NODE_ENV === 'development') {
@@ -96,7 +96,7 @@ const verifyOTPInternal = async (email: string, otp: string, purpose: 'email_ver
   if (!isValid) {
     await pool.execute(`UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?`, [record.otp_id]);
     const remaining = OTP_MAX_ATTEMPTS - (record.attempts + 1);
-    return { ok: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left — request a new code.'}` };
+    return { ok: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left, request a new code.'}` };
   }
 
   // Mark as verified
@@ -107,11 +107,11 @@ const verifyOTPInternal = async (email: string, otp: string, purpose: 'email_ver
 // Register new user.
 // New users land in a "pending" state: role_id = NULL, is_active = 0.
 // Admin must approve from the Users page before they can log in.
-// Optional: `auto_approve_registrations` setting (default false) — if true, new users
+// Optional: `auto_approve_registrations` setting (default false), if true, new users
 // are auto-assigned the `staff` role and activated immediately.
 const register: RequestHandler = async (req, res) => {
   try {
-    // requested_role is a *request* — still pending until admin approval (role_id stays NULL unless autoApprove)
+    // requested_role is a *request*, still pending until admin approval (role_id stays NULL unless autoApprove)
     const { username, email, password, full_name, phone, requested_role } = req.body;
 
     if (!username || !email || !password) {
@@ -130,7 +130,7 @@ const register: RequestHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
     }
 
-    // Validate requested role (optional) — staff/supervisor/auditor only; admin cannot be self-requested
+    // Validate requested role (optional), staff/supervisor/auditor only; admin cannot be self-requested
     const allowedRequested = ['staff', 'supervisor', 'auditor'];
     let normalizedRequested: string | null = null;
     if (requested_role) {
@@ -200,7 +200,7 @@ const register: RequestHandler = async (req, res) => {
         result.insertId,
         autoApprove
           ? `New user "${username}" registered and auto-approved as staff`
-          : `New user "${username}" registered — awaiting email verification and admin approval`
+          : `New user "${username}" registered, awaiting email verification and admin approval`
       ]
     );
 
@@ -208,7 +208,7 @@ const register: RequestHandler = async (req, res) => {
     if (!autoApprove) {
       await notifyAdminsAndSupervisors(
         'New User Registration',
-        `${username} (${email}) requested role: ${normalizedRequested} — awaiting email verification and role assignment.`,
+        `${username} (${email}) requested role: ${normalizedRequested}, awaiting email verification and role assignment.`,
         'approval'
       );
     }
@@ -289,7 +289,7 @@ const login: RequestHandler = async (req, res) => {
       });
     }
 
-    // Pending — role not yet assigned
+    // Pending, role not yet assigned
     if (!user.role_id || !user.role_name) {
       return res.status(403).json({
         success: false,
@@ -408,7 +408,7 @@ const verifyEmail: RequestHandler = async (req, res) => {
   }
 };
 
-// Forgot password — send OTP
+// Forgot password, send OTP
 const forgotPassword: RequestHandler = async (req, res) => {
   try {
     const { email } = req.body;
@@ -460,7 +460,7 @@ const verifyResetOTP: RequestHandler = async (req, res) => {
     if (!isValid) {
       await pool.execute(`UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?`, [record.otp_id]);
       const remaining = OTP_MAX_ATTEMPTS - (record.attempts + 1);
-      return res.status(400).json({ success: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left — request a new code.'}` });
+      return res.status(400).json({ success: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left, request a new code.'}` });
     }
 
     // Mark verified but keep for reset-password step (reset will check verified=TRUE and still within expiry window)
@@ -503,11 +503,11 @@ const resetPassword: RequestHandler = async (req, res) => {
       if (!isValid) {
         await pool.execute(`UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?`, [record.otp_id]);
         const remaining = OTP_MAX_ATTEMPTS - (record.attempts + 1);
-        return res.status(400).json({ success: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left — request a new code.'}` });
+        return res.status(400).json({ success: false, message: `Invalid code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'No attempts left, request a new code.'}` });
       }
       await pool.execute(`UPDATE email_otps SET verified = TRUE WHERE otp_id = ?`, [record.otp_id]);
     } else {
-      // Already verified via verifyResetOTP step — need to confirm otp matches the verified record
+      // Already verified via verifyResetOTP step, need to confirm otp matches the verified record
       const isValid = await verifyOTP(otp, record.otp_hash);
       if (!isValid) return res.status(400).json({ success: false, message: 'Invalid code for verified session.' });
     }

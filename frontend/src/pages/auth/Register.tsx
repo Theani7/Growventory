@@ -70,7 +70,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfdfc] flex flex-col lg:flex-row">
-      {/* Left — Image (hidden on mobile) */}
+      {/* Left Image (hidden on mobile) */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden bg-stone-900">
         <img src="/feature-inventory.png" alt="Six potted plants with QR tags and inventory clipboard on wood table" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
@@ -78,7 +78,7 @@ const Register = () => {
         <div className="absolute bottom-6 left-6 right-6">
           <div className="bg-white/95 backdrop-blur rounded-2xl border border-white/20 p-5 shadow-xl">
             <p className="text-sm font-semibold text-stone-900">Inventory you can trust</p>
-            <p className="text-xs text-stone-600 mt-1 leading-relaxed">Every plant tagged, counted, and tracked — from potting to sale. QR tags and CSV import make it effortless.</p>
+            <p className="text-xs text-stone-600 mt-1 leading-relaxed">Every plant tagged, counted and tracked from potting to sale. QR tags and CSV import make it effortless.</p>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-xl bg-stone-50 border border-stone-100 py-2">
                 <div className="text-sm font-bold text-stone-900">QR Tag</div>
@@ -97,7 +97,7 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Right — Form */}
+      {/* Right Form */}
       <div className="flex-1 flex flex-col min-h-screen">
         <div className="h-[72px] flex items-center justify-between px-6 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2.5">
@@ -150,9 +150,9 @@ const Register = () => {
                     onChange={(e) => setFormData({ ...formData, requested_role: e.target.value })}
                     className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] appearance-none"
                   >
-                    <option value="staff">Staff — Daily operations</option>
-                    <option value="supervisor">Supervisor — Manage staff & approvals</option>
-                    <option value="auditor">Auditor — Read-only reports</option>
+                    <option value="staff">Staff: Daily operations</option>
+                    <option value="supervisor">Supervisor: Manage staff and approvals</option>
+                    <option value="auditor">Auditor: Read-only reports</option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">▾</div>
                 </div>

@@ -9,7 +9,7 @@ const getTransporter = () => {
   const pass = process.env.EMAIL_PASS;
 
   if (!user || !pass) {
-    console.warn('⚠️  EMAIL_USER/EMAIL_PASS not set — emails will be logged to console instead of sent.');
+    console.warn('⚠️  EMAIL_USER/EMAIL_PASS not set, emails will be logged to console instead of sent.');
     return null;
   }
 
@@ -67,7 +67,7 @@ export const sendEmail = async (opts: SendMailOptions): Promise<boolean> => {
     return true;
   } catch (err: any) {
     console.error('❌ Failed to send email:', err.message);
-    // Don't throw — allow OTP to still be logged in dev if desired
+    // Don't throw, allow OTP to still be logged in dev if desired
     if (process.env.NODE_ENV === 'development') {
       console.log(`[DEV FALLBACK OTP EMAIL] To: ${opts.to} Subject: ${opts.subject}`);
     }
@@ -110,7 +110,7 @@ export const sendVerificationOTP = async (to: string, otp: string, username?: st
   const greeting = username ? `Hi ${username},` : 'Hi,';
   return sendEmail({
     to,
-    subject: 'Verify your Growventory email — Your 4-digit code',
+    subject: 'Verify your Growventory email, Your 4-digit code',
     text: `${greeting} Your email verification code is ${otp}. It expires in 10 minutes. If you didn't create an account, ignore this email.`,
     html: baseTemplate(
       'Verify your email',
@@ -126,7 +126,7 @@ export const sendPasswordResetOTP = async (to: string, otp: string, username?: s
   const greeting = username ? `Hi ${username},` : 'Hi,';
   return sendEmail({
     to,
-    subject: 'Reset your Growventory password — Your 4-digit code',
+    subject: 'Reset your Growventory password, Your 4-digit code',
     text: `${greeting} Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request a reset, ignore this email.`,
     html: baseTemplate(
       'Reset your password',

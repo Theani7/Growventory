@@ -77,7 +77,7 @@ scrolled
         </div>
       </nav>
 
-      {/* Hero — Split Editorial */}
+      {/* Hero Split Editorial */}
       <section className="relative min-h-[100dvh] flex items-center pt-[72px] overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full py-12 lg:py-0">
           <div className="grid lg:grid-cols-[1.05fr_1.15fr] gap-10 lg:gap-8 items-center">
@@ -108,7 +108,7 @@ scrolled
               </div>
             </Reveal>
 
-            {/* Right image — hero-greenhouse */}
+            {/* Right image hero-greenhouse */}
             <Reveal variant="blur-in" delay={200} duration={900}>
               <div className="relative lg:ml-4">
                 <div className="relative rounded-[24px] overflow-hidden bg-stone-100 shadow-2xl shadow-stone-900/10 border border-stone-200">
@@ -168,7 +168,7 @@ scrolled
         </div>
       </section>
 
-      {/* Stats — subtle */}
+      {/* Stats subtle */}
       <section className="py-12 px-6 lg:px-8 bg-[#f6f7f5] border-b border-stone-100">
         <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
           {metrics.map((m) => (
@@ -185,7 +185,7 @@ scrolled
         </div>
       </section>
 
-      {/* Features — Bento with real image */}
+      {/* Features Bento with real image */}
       <section id="features" className="py-20 lg:py-28 px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-2xl">
@@ -194,12 +194,12 @@ scrolled
               <span className="text-stone-400">Nothing you don't.</span>
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600 max-w-[52ch]">
-              Purpose-built for nursery ops — inventory, health, stock, and reporting in one quiet workspace.
+              Purpose-built for nursery ops with inventory, health, stock and reporting in one quiet workspace.
             </p>
           </div>
 
           <div className="mt-12 grid lg:grid-cols-12 gap-5">
-            {/* Large image card — feature-inventory */}
+            {/* Large image card feature-inventory */}
             <Reveal variant="fade-up" className="lg:col-span-7">
               <div className="relative h-full min-h-[420px] rounded-[20px] overflow-hidden bg-stone-900 border border-stone-200 group">
                 <img
@@ -211,9 +211,9 @@ scrolled
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/70 via-stone-900/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/95 backdrop-blur rounded-full text-xs font-semibold text-stone-800 mb-3">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Most loved — Inventory
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Most loved: Inventory
                   </div>
-                  <h3 className="text-xl font-bold text-white leading-tight">Scan, tag, and track — from potting to sale</h3>
+                  <h3 className="text-xl font-bold text-white leading-tight">Scan, tag and track from potting to sale</h3>
                   <p className="mt-2 text-sm leading-relaxed text-stone-200 max-w-[50ch]">QR tags, categories, images, and live stock in one table. Add 100 plants in minutes via CSV.</p>
                 </div>
               </div>
@@ -254,7 +254,7 @@ scrolled
               Live in three<br />
               deliberate steps.
             </h2>
-            <p className="text-sm leading-relaxed text-stone-600 max-w-[36ch]">No onboarding theatre. Create an account, add your plants, and start tracking — the rest is just growing.</p>
+            <p className="text-sm leading-relaxed text-stone-600 max-w-[36ch]">No onboarding theatre. Create an account, add your plants and start tracking. The rest is just growing.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -270,7 +270,7 @@ scrolled
         </div>
       </section>
 
-      {/* Why — Team image split */}
+      {/* Why Team image split */}
       <section id="why" className="py-20 lg:py-28 px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
           {/* Image */}
@@ -288,7 +288,7 @@ scrolled
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-stone-900">Growth data • May 2024 live</p>
-                  <p className="text-xs text-stone-500">Tablet sync with cloud — real-time for every role.</p>
+                  <p className="text-xs text-stone-500">Tablet sync with cloud, real time for every role.</p>
                 </div>
               </div>
             </div>
@@ -333,7 +333,7 @@ scrolled
         </div>
       </section>
 
-      {/* CTA — aerial image background */}
+      {/* CTA aerial image background */}
       <section className="relative mx-6 lg:mx-8 my-10 rounded-[24px] overflow-hidden border border-stone-200">
         <img
           src="/cta-aerial.png"
@@ -349,7 +349,7 @@ scrolled
             without the guesswork?
           </h2>
           <p className="mt-4 text-base lg:text-lg leading-relaxed text-white/80 max-w-[48ch] mx-auto">
-            Join Growventory today — from first seedling to full field, your inventory stays accurate and calm.
+            Join Growventory today. From first seedling to full field, your inventory stays accurate and calm.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/register" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-[#1a3a2a] font-semibold rounded-full hover:bg-stone-50 transition-colors shadow-lg">
@@ -372,7 +372,7 @@ scrolled
                 <img src="/logo.png" alt="Growventory" className="w-9 h-9 object-contain" />
                 <span className="font-bold text-white">Growventory</span>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-white/60 max-w-[28ch]">The calm nursery OS — inventory, health, and stock in one place.</p>
+              <p className="mt-3 text-sm leading-relaxed text-white/60 max-w-[28ch]">The calm nursery OS for inventory, health and stock.</p>
             </div>
             {[
               { title: 'Product', items: ['Features', 'How it works', 'Modules'] },

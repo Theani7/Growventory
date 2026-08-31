@@ -553,8 +553,8 @@ const Plants = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap">{plant.category_name || '—'}</td>
-                        <td className="whitespace-nowrap">{plant.location || '—'}</td>
+                        <td className="whitespace-nowrap">{plant.category_name || '-'}</td>
+                        <td className="whitespace-nowrap">{plant.location || '-'}</td>
                         <td className="whitespace-nowrap text-center">
                           <span className={`font-bold tabular-nums ${plant.current_stock <= plant.min_stock_threshold ? 'text-amber-600' : 'text-ink-900'}`}>
                             {plant.current_stock}
@@ -670,7 +670,7 @@ const Plants = () => {
                   <label className="cursor-pointer flex items-center gap-3 px-4 py-3 ring-1 ring-dashed ring-ink-300 rounded-xl hover:ring-ink-900 hover:bg-ink-50 transition min-h-[44px]">
                     <ImageIcon className="w-5 h-5 text-ink-400" />
                     <span className="text-sm text-ink-600 flex-1 truncate">
-                      {formData.image ? formData.image.name : 'Click to upload image (JPG, PNG, WEBP, GIF — max 5MB)'}
+                      {formData.image ? formData.image.name : 'Click to upload image (JPG, PNG, WEBP, GIF max 5MB)'}
                     </span>
                     <input
                       type="file"

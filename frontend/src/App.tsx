@@ -76,7 +76,7 @@ function App() {
           >
             <Route index element={<DashboardIndex />} />
 
-            {/* Operational pages — auditor blocked */}
+            {/* Operational pages auditor blocked */}
             <Route path="plants" element={
               <RoleGuard allowedRoles={OPERATIONAL}><Plants /></RoleGuard>
             } />
@@ -96,7 +96,7 @@ function App() {
               <RoleGuard allowedRoles={OPERATIONAL}><Notifications /></RoleGuard>
             } />
 
-            {/* Reports & Logs — auditor allowed (read-only) */}
+            {/* Reports & Logs auditor allowed (read-only) */}
             <Route path="reports" element={
               <RoleGuard allowedRoles={REPORTS_ROLES}><Reports /></RoleGuard>
             } />

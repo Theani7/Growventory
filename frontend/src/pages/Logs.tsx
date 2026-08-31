@@ -248,15 +248,15 @@ const Logs = () => {
                         )}
                       </td>
                       <td className="max-w-md">
-                        <p className="text-ink-700 line-clamp-2">{log.description || '—'}</p>
+                        <p className="text-ink-700 line-clamp-2">{log.description || '-'}</p>
                       </td>
                       <td>
                         {log.table_name ? (
                           <span className="chip text-[10px]">{log.table_name}</span>
-                        ) : '—'}
+                        ) : '-'}
                       </td>
                       <td className="text-ink-500 tabular-nums">
-                        {log.record_id ? `#${log.record_id}` : '—'}
+                        {log.record_id ? `#${log.record_id}` : '-'}
                       </td>
                       <td className="text-ink-500 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">

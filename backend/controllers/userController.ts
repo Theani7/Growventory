@@ -4,7 +4,7 @@ import type { RowDataPacket, ResultSetHeader, PoolConnection } from 'mysql2/prom
 import { pool } from '../config/db';
 import { createNotification } from './notificationController';
 
-// Get all users (admin only) — uses LEFT JOIN so pending users (role_id NULL) are included
+// Get all users (admin only), uses LEFT JOIN so pending users (role_id NULL) are included
 const getAllUsers: RequestHandler = async (req, res) => {
   try {
     const [users] = await pool.execute<RowDataPacket[]>(
@@ -52,7 +52,7 @@ const getAllRoles: RequestHandler = async (req, res) => {
   }
 };
 
-// Approve a pending user (admin) — assigns role and activates account
+// Approve a pending user (admin), assigns role and activates account
 const approveUser: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -77,10 +77,10 @@ const approveUser: RequestHandler = async (req, res) => {
     }
 
     if (users[0].role_id !== null) {
-      return res.status(400).json({ success: false, message: 'User is not pending — already has a role assigned.' });
+      return res.status(400).json({ success: false, message: 'User is not pending, already has a role assigned.' });
     }
 
-    // Enforce requested role on first approval — admin cannot change it
+    // Enforce requested role on first approval, admin cannot change it
     if (users[0].requested_role) {
       const requested = String(users[0].requested_role).toLowerCase();
       const chosen = String(roles[0].role_name).toLowerCase();
@@ -118,7 +118,7 @@ const approveUser: RequestHandler = async (req, res) => {
   }
 };
 
-// Reject a pending user (admin) — deletes the registration
+// Reject a pending user (admin), deletes the registration
 const rejectUser: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,16 +135,16 @@ const rejectUser: RequestHandler = async (req, res) => {
     if (users[0].role_id !== null) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot reject — user already has a role. Use deactivate or delete instead.'
+        message: 'Cannot reject, user already has a role. Use deactivate or delete instead.'
       });
     }
 
-    // Activity log BEFORE delete (so we have a trail) — uses admin as actor
+    // Activity log BEFORE delete (so we have a trail), uses admin as actor
     await pool.execute<ResultSetHeader>(
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
        VALUES (?, ?, ?, ?, ?)`,
       [req.user!.user_id, 'REJECT_USER', 'users', id,
-        `Rejected user registration "${users[0].username}" (${users[0].email})${reason ? ` — Reason: ${reason}` : ''}`]
+        `Rejected user registration "${users[0].username}" (${users[0].email})${reason ? `, Reason: ${reason}` : ''}`]
     );
 
     // Clean up references to this user before delete (FK constraints)
@@ -159,7 +159,7 @@ const rejectUser: RequestHandler = async (req, res) => {
   }
 };
 
-// Create user (admin) — direct creation always assigns a role
+// Create user (admin), direct creation always assigns a role
 const createUser: RequestHandler = async (req, res) => {
   try {
     const { username, email, password, full_name, phone, role_id } = req.body;
@@ -223,7 +223,7 @@ const updateUser: RequestHandler = async (req, res) => {
   }
 };
 
-// Toggle user active status — only meaningful for users with a role assigned
+// Toggle user active status, only meaningful for users with a role assigned
 const toggleUserActive: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -308,7 +308,7 @@ const deleteUser: RequestHandler = async (req, res) => {
       await connection.execute<ResultSetHeader>('DELETE FROM notifications WHERE user_id = ?', [id]);
       // For tables with NOT NULL FKs (tasks), delete the rows rather than nulling
       await connection.execute<ResultSetHeader>('DELETE FROM tasks WHERE assigned_to = ? OR assigned_by = ?', [id, id]);
-      // Nullable FKs — just clear the reference
+      // Nullable FKs, just clear the reference
       await connection.execute<ResultSetHeader>('UPDATE stock_movements SET created_by = NULL WHERE created_by = ?', [id]);
       await connection.execute<ResultSetHeader>('UPDATE stock_movements SET approved_by = NULL WHERE approved_by = ?', [id]);
       await connection.execute<ResultSetHeader>('UPDATE plant_health_logs SET checked_by = NULL WHERE checked_by = ?', [id]);
@@ -320,7 +320,7 @@ const deleteUser: RequestHandler = async (req, res) => {
         if (fkError?.code === 'ER_ROW_IS_REFERENCED_2' || fkError?.code === 'ER_NO_REFERENCED_ROW_2' || fkError?.errno === 1451 || fkError?.errno === 1452) {
           return res.status(409).json({
             success: false,
-            message: 'Cannot delete user — they have associated records that prevent deletion. Consider deactivating instead.',
+            message: 'Cannot delete user, they have associated records that prevent deletion. Consider deactivating instead.',
             error: fkError.message
           });
         }

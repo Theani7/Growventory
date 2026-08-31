@@ -70,7 +70,7 @@ const VerifyEmail = () => {
     try {
       const { data } = await api.post('/auth/send-verification-otp', { email: email.trim() });
       if (data.success) {
-        toast.success('New code sent — check your inbox (and spam)');
+        toast.success('New code sent. Check your inbox and spam');
         setCooldown(60);
         setOtp('');
       } else {
@@ -102,7 +102,7 @@ const VerifyEmail = () => {
             </span>
             <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Awaiting approval</h1>
             <p className="mt-3 text-stone-600 leading-relaxed">
-              Thanks, <span className="font-semibold text-stone-900">{verifiedResult.username}</span> — your email is verified. An administrator will review your account and assign you a role shortly.
+              Thanks, <span className="font-semibold text-stone-900">{verifiedResult.username}</span>. Your email is verified. An administrator will review your account and assign you a role shortly.
             </p>
             <div className="mt-6 p-4 bg-stone-50 rounded-2xl text-left">
               <h3 className="text-sm font-bold text-stone-900 mb-2">What happens next?</h3>

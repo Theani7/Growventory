@@ -73,7 +73,7 @@ const ForgotPassword = () => {
     try {
       const { data } = await api.post('/auth/verify-reset-otp', { email: email.trim(), otp });
       if (data.success) {
-        toast.success('Code verified — set your new password');
+        toast.success('Code verified. Set your new password');
         setStep('reset');
       } else {
         toast.error(data.message || 'Invalid code');
@@ -231,7 +231,7 @@ const ForgotPassword = () => {
         <div className="relative z-10 flex flex-col justify-center w-full p-12 xl:p-20">
           <div className="max-w-md">
             <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight">Back in control.</h2>
-            <p className="mt-4 text-white/80">4-digit OTP via Gmail App Password — fast & secure.</p>
+            <p className="mt-4 text-white/80">4-digit OTP via Gmail App Password. Fast and secure.</p>
             <div className="mt-8 p-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl">
               <p className="text-forest-50 text-sm flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-300 mt-0.5" /> Gmail SMTP with App Password, TLS 587</p>
               <p className="text-white/70 text-xs mt-2">Codes are bcrypt-hashed, single-use, 10-minute expiry, 60s resend cooldown, 5 attempt limit.</p>

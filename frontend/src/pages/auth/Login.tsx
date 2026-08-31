@@ -65,7 +65,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfdfc] flex flex-col lg:flex-row">
-      {/* Left — Form */}
+      {/* Left Form */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
         <div className="h-[72px] flex items-center justify-between px-6 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
@@ -205,7 +205,7 @@ const Login = () => {
         <p className="hidden lg:block text-center text-xs text-stone-400 pb-6">© {new Date().getFullYear()} Growventory</p>
       </div>
 
-      {/* Right — Image */}
+      {/* Right Image */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden bg-stone-900">
         <img src="/hero-greenhouse.png" alt="Greenhouse interior with plants on benches" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />

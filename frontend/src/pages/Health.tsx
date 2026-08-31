@@ -171,12 +171,12 @@ const Health = () => {
                           {meta.label}
                         </span>
                       </td>
-                      <td className="text-ink-600">{log.growth_stage || '—'}</td>
-                      <td className="max-w-xs truncate text-ink-500">{log.notes || '—'}</td>
+                      <td className="text-ink-600">{log.growth_stage || '-'}</td>
+                      <td className="max-w-xs truncate text-ink-500">{log.notes || '-'}</td>
                       <td className="text-ink-600">
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-ink-400" />
-                          {log.checked_by_name || '—'}
+                          {log.checked_by_name || '-'}
                         </div>
                       </td>
                       <td className="text-ink-500 whitespace-nowrap">

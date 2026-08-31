@@ -527,7 +527,7 @@ const Users = () => {
                 </select>
                 {approveTarget.requested_role ? (
                   <p className="text-xs text-amber-700 mt-1.5 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-amber-500 rounded-full" /> Requested role is locked for first approval — assigned as <span className="font-semibold capitalize">{approveTarget.requested_role}</span>.
+                    <span className="w-2 h-2 bg-amber-500 rounded-full" /> Requested role is locked for first approval. Assigned as <span className="font-semibold capitalize">{approveTarget.requested_role}</span>.
                   </p>
                 ) : (
                   <p className="text-xs text-ink-500 mt-1.5">The user will be notified once approved.</p>

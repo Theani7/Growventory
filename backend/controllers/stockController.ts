@@ -5,7 +5,7 @@ import { pool } from '../config/db';
 import { notifyAdminsAndSupervisors, createNotification } from './notificationController';
 import stockService from '../services/stockService';
 
-// Helper — read a system setting (returns string or default)
+// Helper, read a system setting (returns string or default)
 const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
   try {
     const [rows] = await pool.execute<RowDataPacket[]>(
@@ -177,7 +177,7 @@ const createMovement: RequestHandler = async (req, res) => {
       }
       new_stock = previous_stock - qty;
     } else {
-      // ADJUSTMENT — quantity is the new absolute value
+      // ADJUSTMENT, quantity is the new absolute value
       new_stock = qty;
     }
 
@@ -228,7 +228,7 @@ const createMovement: RequestHandler = async (req, res) => {
         );
       }
     } else {
-      // Pending approval — insert movement record manually as 'pending'
+      // Pending approval, insert movement record manually as 'pending'
       const [movementResult] = await connection.execute<ResultSetHeader>(
         `INSERT INTO stock_movements 
           (plant_id, movement_type, quantity, previous_stock, new_stock, notes, created_by, approval_status) 
@@ -242,7 +242,7 @@ const createMovement: RequestHandler = async (req, res) => {
         `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
          VALUES (?, ?, ?, ?, ?)`,
         [user_id, 'STOCK_PENDING', 'stock_movements', movementId,
-          `Pending ${type.toLowerCase()} of ${qty} for ${plant.name} — awaiting supervisor approval`]
+          `Pending ${type.toLowerCase()} of ${qty} for ${plant.name}, awaiting supervisor approval`]
       );
 
       await notifyAdminsAndSupervisors(
@@ -312,7 +312,7 @@ const approveMovement: RequestHandler = async (req, res) => {
       await connection.rollback();
       return res.status(400).json({
         success: false,
-        message: `Cannot approve — movement is already ${movement.approval_status}.`
+        message: `Cannot approve, movement is already ${movement.approval_status}.`
       });
     }
 
@@ -405,7 +405,7 @@ const rejectMovement: RequestHandler = async (req, res) => {
       await connection.rollback();
       return res.status(400).json({
         success: false,
-        message: `Cannot reject — movement is already ${movement.approval_status}.`
+        message: `Cannot reject, movement is already ${movement.approval_status}.`
       });
     }
 
@@ -425,7 +425,7 @@ const rejectMovement: RequestHandler = async (req, res) => {
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) 
        VALUES (?, ?, ?, ?, ?)`,
       [approver_id, 'STOCK_REJECTED', 'stock_movements', id,
-        `Rejected ${movement.movement_type.toLowerCase()} of ${movement.quantity} for ${movement.plant_name}${reason ? ` — Reason: ${reason}` : ''}`]
+        `Rejected ${movement.movement_type.toLowerCase()} of ${movement.quantity} for ${movement.plant_name}${reason ? `, Reason: ${reason}` : ''}`]
     );
 
     if (movement.created_by && movement.created_by !== approver_id) {
