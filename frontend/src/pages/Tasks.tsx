@@ -197,7 +197,7 @@ const Tasks = () => {
             const sMeta = statusMeta[task.status] || statusMeta.pending;
             const StatusIcon = sMeta.icon;
             const pMeta = priorityMeta[task.priority || ''] || priorityMeta.medium;
-            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+            const isOverdue = task.due_date && new Date(task.due_date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && task.status !== 'completed';
             return (
               <div key={task.task_id} className="card card-hover p-5 group">
                 <div className="flex items-start gap-4">
@@ -239,7 +239,7 @@ const Tasks = () => {
                         </div>
                       )}
                     </div>
-                    {(task.assigned_to === user?.user_id || isManager) && task.status !== 'completed' && (
+                    {(String(task.assigned_to) === String(user?.user_id) || isManager) && task.status !== 'completed' && (
                       <div className="flex gap-2 mt-3">
                         {task.status !== 'in_progress' && (
                           <button onClick={() => handleStatusChange(task.task_id, 'in_progress')} className="btn-ghost text-xs">

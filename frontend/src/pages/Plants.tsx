@@ -11,7 +11,7 @@ import Tooltip from '../components/Tooltip';
 import { useAuth } from '../context/AuthContext';
 import type { Category, Plant } from '../types';
 
-const API_HOST = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api').replace('/api', '');
+const API_HOST = import.meta.env.VITE_API_BASE_URL?.startsWith('http') ? new URL(import.meta.env.VITE_API_BASE_URL).origin : '';
 
 interface PlantFormData {
   name: string;

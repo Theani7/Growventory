@@ -64,9 +64,15 @@ const Stock = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const qty = Number(formData.quantity);
+    const isAdj = formData.movement_type === 'ADJUSTMENT';
+    if (!Number.isInteger(qty) || (isAdj ? qty < 0 : qty <= 0)) {
+      toast.error(isAdj ? 'Quantity must be 0 or greater.' : 'Quantity must be a positive integer.');
+      return;
+    }
     setSubmitting(true);
     try {
-      const { data } = await api.post('/stock/movements', { ...formData, quantity: parseInt(formData.quantity) });
+      const { data } = await api.post('/stock/movements', { ...formData, quantity: qty });
       toast.success(data.message || 'Movement recorded');
       setShowModal(false);
       setFormData({ plant_id: '', movement_type: 'IN', quantity: '', notes: '' });
@@ -463,8 +469,8 @@ const Stock = () => {
                 </div>
               </div>
               <div>
-                <label className="label">Quantity *</label>
-                <input type="number" required min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} className="input-field" placeholder="0" />
+                <label className="label">{formData.movement_type === 'ADJUSTMENT' ? 'New absolute stock *' : 'Quantity *'}</label>
+                <input type="number" required min={formData.movement_type === 'ADJUSTMENT' ? 0 : 1} value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} className="input-field" placeholder="0" />
                 {formData.movement_type === 'ADJUSTMENT' && (
                   <p className="text-xs text-ink-500 mt-1">Adjustment sets the absolute stock value.</p>
                 )}
