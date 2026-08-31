@@ -11,8 +11,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-forest-50 via-white to-forest-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-forest-200 border-t-forest-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#eef6ee] via-[#fcfdfc] to-[#d6ead6]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-stone-200 border-t-[#1a3a2a]"></div>
       </div>
     );
   }

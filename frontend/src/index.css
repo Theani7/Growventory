@@ -18,8 +18,8 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f7faf6;
-  color: #1a1f29;
+  background-color: #fcfdfc;
+  color: #1c1917;
   font-feature-settings: 'cv11', 'ss01';
 }
 
@@ -81,13 +81,13 @@ p, h1, h2, h3, h4, h5, h6, span, div:not([class*="btn"]):not([class*="input"]) {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #dde1e9;
+  background: #e7e5e4;
   border-radius: 6px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c1c8d4;
+  background: #d6d3d1;
   background-clip: padding-box;
   border: 2px solid transparent;
 }

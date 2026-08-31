@@ -78,7 +78,7 @@ const OTPInput = ({ value, onChange, length = 4, disabled }: OTPInputProps) => {
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           disabled={disabled}
-          className="w-14 h-14 text-center text-2xl font-bold tracking-widest bg-white border-2 border-gray-200 rounded-xl focus:border-forest-500 focus:ring-4 focus:ring-forest-500/10 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-14 h-14 text-center text-2xl font-bold tracking-widest bg-white border-2 border-stone-200 rounded-xl focus:border-[#1a3a2a] focus:ring-4 focus:ring-[#1a3a2a]/10 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         />
       ))}
     </div>

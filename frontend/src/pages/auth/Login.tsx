@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Lock, ArrowRight, Loader2, ChevronLeft, Sparkles, CheckCircle2, AlertCircle, Clock, Mail } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, ArrowRight, Loader2, AlertCircle, Clock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -14,7 +14,6 @@ const Login = () => {
   const [error, setError] = useState('');
   const [errorCode, setErrorCode] = useState('');
   const [formData, setFormData] = useState({ username: '', password: '' });
-
   const [verifyEmail, setVerifyEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
 
@@ -23,20 +22,15 @@ const Login = () => {
     setError('');
     setErrorCode('');
     setVerifyEmail('');
-    
     if (!formData.username || !formData.password) {
       setError('Please fill in all fields');
       return;
     }
-    
     setIsLoading(true);
     try {
       const result = await login(formData.username, formData.password);
-      if (result.success) {
-        navigate('/dashboard');
-      } else {
-        setError(result.message || 'Login failed');
-      }
+      if (result.success) navigate('/dashboard');
+      else setError(result.message || 'Login failed');
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Invalid username or password';
       const code = err.response?.data?.code || '';
@@ -45,9 +39,7 @@ const Login = () => {
       if (code === 'EMAIL_NOT_VERIFIED') {
         const emailFromResp = err.response?.data?.data?.email || formData.username;
         setVerifyEmail(emailFromResp);
-        // Store for verify page
         localStorage.setItem('pendingVerificationEmail', emailFromResp);
-        // Auto-send fresh code if desired
       }
     } finally {
       setIsLoading(false);
@@ -72,242 +64,183 @@ const Login = () => {
   const isNeedVerify = errorCode === 'EMAIL_NOT_VERIFIED';
 
   return (
-    <div className="min-h-screen bg-white flex">
-      {/* Left side - Form */}
-      <div className="flex-1 flex flex-col px-6 sm:px-12 lg:px-16 xl:px-24 py-8 relative">
-        {/* Top nav */}
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
-            <span className="font-bold text-lg text-gray-900 tracking-tight">Growventory</span>
+    <div className="min-h-screen bg-[#fcfdfc] flex flex-col lg:flex-row">
+      {/* Left — Form */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Top bar */}
+        <div className="h-[72px] flex items-center justify-between px-6 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="Growventory" className="w-9 h-9 object-contain" />
+            <span className="font-bold text-[16px] tracking-tight text-stone-900">Growventory</span>
           </Link>
-          <Link to="/" className="hidden sm:flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-            Back home
+          <Link to="/" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-stone-900">
+            ← Back home
           </Link>
         </div>
 
-        {/* Form */}
-        <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto py-12">
-          <div className="mb-8">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-forest-50 text-forest-700 text-xs font-semibold rounded-full mb-4">
-              <Sparkles className="w-3 h-3" />
-              Welcome back
-            </span>
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Sign in to your account</h1>
-            <p className="mt-3 text-gray-500">
-              New to Growventory?{' '}
-              <Link to="/register" className="text-forest-700 hover:text-forest-800 font-semibold transition-colors">
-                Create an account
-              </Link>
-            </p>
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 lg:px-12 py-10">
+          <div className="w-full max-w-[420px]">
+            <div className="mb-8">
+              <h1 className="text-[32px] font-bold tracking-tight text-stone-900 leading-none">Welcome back</h1>
+              <p className="mt-2 text-sm text-stone-600">
+                New to Growventory?{' '}
+                <Link to="/register" className="font-semibold text-[#1d4d2e] hover:underline">
+                  Create an account
+                </Link>
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-5">
+                {isNeedVerify ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-4 h-4 text-amber-700" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-amber-900">Verify your email</p>
+                        <p className="text-sm text-amber-800/80 mt-1 leading-relaxed">{error}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button onClick={() => navigate(`/verify-email?email=${encodeURIComponent(verifyEmail)}`)} className="py-2.5 rounded-full bg-[#1a3a2a] text-white text-sm font-semibold hover:bg-[#143021]">
+                        Enter code
+                      </button>
+                      <button onClick={handleResendVerification} disabled={isResending} className="py-2.5 rounded-full bg-white border border-amber-200 text-amber-800 text-sm font-semibold hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-1">
+                        {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Resend
+                      </button>
+                    </div>
+                  </div>
+                ) : isPending ? (
+                  <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-4 h-4 text-stone-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-stone-900">Awaiting approval</p>
+                      <p className="text-sm text-stone-600 mt-1">{error}</p>
+                    </div>
+                  </div>
+                ) : isDisabled ? (
+                  <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white border flex items-center justify-center">
+                      <AlertCircle className="w-4 h-4 text-stone-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-stone-900">Account disabled</p>
+                      <p className="text-sm text-stone-600 mt-1">{error}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white border border-red-200 flex items-center justify-center">
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-red-900">Login failed</p>
+                      <p className="text-sm text-red-700 mt-1">{error}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="text-[13px] font-medium text-stone-700">Username or email</label>
+                <div className="mt-1.5 relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setError(''); }}
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition"
+                    placeholder="you@example.com"
+                    autoComplete="username"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] font-medium text-stone-700">Password</label>
+                  <Link to="/forgot-password" className="text-xs font-semibold text-[#1d4d2e] hover:underline">Forgot password?</Link>
+                </div>
+                <div className="mt-1.5 relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setError(''); }}
+                    className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition"
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-xs text-stone-500 pt-2">
+                Protected by Growventory • Encrypted & role-based
+              </p>
+            </form>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            isNeedVerify ? (
-              <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-4 h-4 text-blue-700" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-blue-900">Verify your email</p>
-                    <p className="text-sm text-blue-800 mt-0.5">{error}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(verifyEmail)}`)}
-                    className="flex-1 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Enter code
-                  </button>
-                  <button
-                    onClick={handleResendVerification}
-                    disabled={isResending}
-                    className="px-4 py-2 text-sm font-semibold bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 disabled:opacity-50 flex items-center gap-1"
-                  >
-                    {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Resend code
-                  </button>
-                </div>
-              </div>
-            ) : isPending ? (
-              <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4 h-4 text-amber-700" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-900">Awaiting Approval</p>
-                  <p className="text-sm text-amber-800 mt-0.5">{error}</p>
-                </div>
-              </div>
-            ) : isDisabled ? (
-              <div className="mb-5 p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-start gap-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-4 h-4 text-gray-700" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Account Disabled</p>
-                  <p className="text-sm text-gray-600 mt-0.5">{error}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-4 h-4 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-800">Login Failed</p>
-                  <p className="text-sm text-red-600 mt-0.5">{error}</p>
-                </div>
-              </div>
-            )
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username */}
-            <div>
-              <label className="label">Username or email</label>
-              <div className="relative group">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-forest-700 transition-colors">
-                  <User className="w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setError(''); }}
-                  className="input-field pl-11 py-3 text-base"
-                  placeholder="you@example.com"
-                  autoComplete="username"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <div className="relative group">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-forest-700 transition-colors">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setError(''); }}
-                  className="input-field pl-11 pr-11 py-3 text-base"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Forgot password */}
-            <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-sm font-semibold text-forest-700 hover:text-forest-800">
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary w-full py-3.5 text-base shadow-lg shadow-forest-700/20 hover:shadow-forest-700/30 disabled:opacity-70"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-          </form>
         </div>
 
-        {/* Footer */}
-        <p className="text-xs text-gray-400 text-center">
-          © {new Date().getFullYear()} Growventory. All rights reserved.
-        </p>
+        <p className="hidden lg:block text-center text-xs text-stone-400 pb-6">© {new Date().getFullYear()} Growventory</p>
       </div>
 
-      {/* Right side - Visual */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-forest-700 via-forest-800 to-forest-900"></div>
-        
-        {/* Animated blobs */}
-        <div className="absolute top-1/4 -right-20 w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 -left-20 w-96 h-96 bg-forest-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:48px_48px]"></div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center w-full p-12 xl:p-20">
-          <div className="max-w-md">
-            {/* Floating card mockup */}
-            <div className="mb-12">
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
-                <div className="flex items-center gap-3 mb-4">
-                  <img src="/logo.png" alt="Growventory Logo" className="w-12 h-12 object-contain" />
-                  <div>
-                    <p className="text-white font-semibold text-sm">Inventory Update</p>
-                    <p className="text-forest-200 text-xs">2 minutes ago</p>
-                  </div>
-                </div>
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-forest-100 text-sm">Monstera Deliciosa</span>
-                    <span className="text-emerald-300 text-sm font-semibold">+24</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-forest-100 text-sm">Snake Plant</span>
-                    <span className="text-emerald-300 text-sm font-semibold">+12</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-forest-100 text-sm">Fiddle Leaf Fig</span>
-                    <span className="text-amber-300 text-sm font-semibold">Low stock</span>
-                  </div>
-                </div>
+      {/* Right — Image */}
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden bg-stone-900">
+        <img src="/hero-greenhouse.png" alt="Greenhouse interior with plants on benches" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-[#1a3a2a]/20 mix-blend-multiply" />
+        {/* Bottom card */}
+        <div className="absolute bottom-6 left-6 right-6">
+          <div className="bg-white/95 backdrop-blur rounded-2xl border border-white/20 p-5 shadow-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <img src="/logo.png" alt="" className="w-8 h-8 object-contain" />
+              <div>
+                <p className="text-sm font-semibold text-stone-900 leading-none">Growventory</p>
+                <p className="text-xs text-stone-500">Calm inventory, live health</p>
+              </div>
+              <span className="ml-auto text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">Live</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-stone-50 border border-stone-100 py-3">
+                <div className="text-lg font-bold text-stone-900">342</div>
+                <div className="text-[11px] font-medium tracking-wide uppercase text-stone-500">Plants</div>
+              </div>
+              <div className="rounded-xl bg-emerald-50 border border-emerald-100 py-3">
+                <div className="text-lg font-bold text-emerald-800">98%</div>
+                <div className="text-[11px] font-medium tracking-wide uppercase text-emerald-700">Healthy</div>
+              </div>
+              <div className="rounded-xl bg-stone-50 border border-stone-100 py-3">
+                <div className="text-lg font-bold text-stone-900">+18</div>
+                <div className="text-[11px] font-medium tracking-wide uppercase text-stone-500">Today</div>
               </div>
             </div>
-
-            <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
-              Manage your nursery,<br />
-              <span className="text-forest-200">beautifully.</span>
-            </h2>
-            <p className="mt-6 text-lg text-forest-100 leading-relaxed">
-              Sign in to manage your nursery inventory, track stock movements, and monitor plant health.
-            </p>
-
-            <div className="mt-10 space-y-3">
-              {[
-                'Real-time inventory tracking',
-                'Smart health monitoring',
-                'Beautiful analytics & reports',
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                  </div>
-                  <span className="text-forest-50">{item}</span>
-                </div>
-              ))}
-            </div>
           </div>
+          <p className="mt-4 text-center text-xs text-white/70">Trusted by nursery teams • Real-time • Cloud sync</p>
         </div>
       </div>
     </div>
