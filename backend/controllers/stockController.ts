@@ -14,10 +14,12 @@ const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
   return rows.length ? rows[0].setting_value : defaultValue;
 };
 
-// Get all stock movements with optional filters (plant, type, status)
+// Get all stock movements with optional filters (plant, type, status) — paginated
 const getAllMovements: RequestHandler = async (req, res) => {
   try {
     const { plant_id, movement_type, status } = req.query;
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '50'), 10) || 50, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset || '0'), 10) || 0, 0);
 
     let query = `SELECT sm.*, 
                         p.name as plant_name, 
@@ -43,7 +45,8 @@ const getAllMovements: RequestHandler = async (req, res) => {
       params.push(status);
     }
 
-    query += ` ORDER BY sm.movement_date DESC`;
+    query += ` ORDER BY sm.movement_date DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
 
     const [movements] = await pool.execute<RowDataPacket[]>(query, params);
 

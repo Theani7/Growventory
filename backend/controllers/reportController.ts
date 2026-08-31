@@ -12,7 +12,7 @@ const csvCell = (v: unknown): string => {
   return s;
 };
 
-// CSV Export Functions
+// CSV Export Functions — capped at 5000 rows to avoid OOM (use filters for larger exports)
 const exportInventoryCSV: RequestHandler = async (req, res) => {
   try {
     const [plants] = await pool.execute<RowDataPacket[]>(`
@@ -21,7 +21,11 @@ const exportInventoryCSV: RequestHandler = async (req, res) => {
       LEFT JOIN categories c ON p.category_id = c.category_id 
       WHERE p.is_active = 1
       ORDER BY p.name
+      LIMIT 5000
     `);
+    if (plants.length >= 5000) {
+      res.setHeader('X-Warning', 'Results truncated to 5000 rows; apply filters to narrow results');
+    }
 
     let csv = 'Plant ID,Name,Scientific Name,Category,Current Stock,Min Threshold,Health Status,Growth Stage,Location,Purchase Price,Selling Price,Description\n';
 
@@ -63,9 +67,12 @@ const exportStockMovementsCSV: RequestHandler = async (req, res) => {
       params.push(end_date);
     }
 
-    query += ' ORDER BY sm.movement_date DESC';
+    query += ' ORDER BY sm.movement_date DESC LIMIT 5000';
 
     const [movements] = await pool.execute<RowDataPacket[]>(query, params);
+    if (movements.length >= 5000) {
+      res.setHeader('X-Warning', 'Results truncated to 5000 rows; apply filters to narrow results');
+    }
 
     let csv = 'Movement ID,Plant Name,Movement Type,Quantity,Previous Stock,New Stock,Notes,User,Movement Date\n';
 
@@ -99,9 +106,12 @@ const exportHealthLogsCSV: RequestHandler = async (req, res) => {
       params.push(plant_id);
     }
 
-    query += ' ORDER BY hl.check_date DESC';
+    query += ' ORDER BY hl.check_date DESC LIMIT 5000';
 
     const [logs] = await pool.execute<RowDataPacket[]>(query, params);
+    if (logs.length >= 5000) {
+      res.setHeader('X-Warning', 'Results truncated to 5000 rows; apply filters to narrow results');
+    }
 
     let csv = 'Log ID,Plant Name,Health Status,Growth Stage,Notes,Checked By,Check Date\n';
 

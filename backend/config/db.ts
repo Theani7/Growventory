@@ -2,6 +2,12 @@ import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
 import 'dotenv/config';
 
+// Fail-fast if DB password missing in production (prevent insecure default)
+if (process.env.NODE_ENV === 'production' && !process.env.DB_PASSWORD) {
+  console.error('FATAL: DB_PASSWORD environment variable is required in production');
+  process.exit(1);
+}
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',

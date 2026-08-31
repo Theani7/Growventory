@@ -22,11 +22,18 @@ const Logs = () => {
   const [search, setSearch] = useState('');
   const [filterAction, setFilterAction] = useState('');
   const [filterTable, setFilterTable] = useState('');
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(50);
+  const hasMore = logs.length === limit;
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (opts?: { page?: number; limit?: number }) => {
+    const p = opts?.page ?? page;
+    const l = opts?.limit ?? limit;
+    const offset = p * l;
+    const safeLimit = Math.min(Math.max(l, 1), 100);
     setLoading(true);
     try {
-      const { data } = await api.get('/dashboard/recent-activities?limit=100');
+      const { data } = await api.get(`/dashboard/recent-activities?limit=${safeLimit}&offset=${offset}`);
       setLogs(data.data || []);
     } catch {
       toast.error('Failed to fetch activity logs');
@@ -35,17 +42,17 @@ const Logs = () => {
     }
   };
 
-  useEffect(() => { fetchLogs(); }, []);
+  useEffect(() => { fetchLogs({ page, limit }); }, [page, limit]);
 
   useEffect(() => {
-    const handleFocus = () => fetchLogs();
+    const handleFocus = () => fetchLogs({ page, limit });
     window.addEventListener('focus', handleFocus);
-    const interval = setInterval(fetchLogs, 30000);
+    const interval = setInterval(() => fetchLogs({ page, limit }), 30000);
     return () => {
       window.removeEventListener('focus', handleFocus);
       clearInterval(interval);
     };
-  }, []);
+  }, [page, limit]);
 
   const tables = Array.from(new Set(logs.map(l => l.table_name).filter(Boolean))).sort();
   const actions = Array.from(new Set(logs.map(l => l.action_type).filter(Boolean))).sort();
@@ -90,7 +97,7 @@ const Logs = () => {
           <h1 className="page-title mt-1">Activity Logs</h1>
           <p className="page-subtitle">Read-only view of all system activity and user actions</p>
         </div>
-        <button onClick={fetchLogs} className="btn-secondary">
+        <button onClick={() => fetchLogs({ page, limit })} className="btn-secondary">
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
       </div>
@@ -172,6 +179,16 @@ const Logs = () => {
             <option value="">All Tables</option>
             {tables.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
+          <select
+            value={limit}
+            onChange={(e) => { const v = Math.min(Math.max(parseInt(e.target.value, 10) || 50, 1), 100); setLimit(v); setPage(0); }}
+            className="input-field lg:w-28"
+            title="Rows per page"
+          >
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </select>
           {hasActiveFilters && (
             <button onClick={clearFilters} className="btn-secondary">
               <X className="w-4 h-4" /> Clear
@@ -206,71 +223,94 @@ const Logs = () => {
           </p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="table-modern">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>User</th>
-                  <th>Description</th>
-                  <th>Table</th>
-                  <th>Record</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((log) => {
-                  const meta = ACTION_META[log.action_type ?? ''] || { 
-                    icon: ActivityIcon, 
-                    color: 'text-ink-700 bg-ink-100 ring-ink-200', 
-                    label: log.action_type || 'Activity' 
-                  };
-                  const Icon = meta.icon;
-                  return (
-                    <tr key={log.log_id}>
-                      <td>
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ${meta.color}`}>
-                          <Icon className="w-3 h-3" />
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td>
-                        {log.username ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 bg-gradient-to-br from-moss-500 to-accent-teal rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                              {log.username.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="font-semibold text-ink-900">{log.username}</span>
-                          </div>
-                        ) : (
-                          <span className="text-ink-400">System</span>
-                        )}
-                      </td>
-                      <td className="max-w-md">
-                        <p className="text-ink-700 line-clamp-2">{log.description || '-'}</p>
-                      </td>
-                      <td>
-                        {log.table_name ? (
-                          <span className="chip text-[10px]">{log.table_name}</span>
-                        ) : '-'}
-                      </td>
-                      <td className="text-ink-500 tabular-nums">
-                        {log.record_id ? `#${log.record_id}` : '-'}
-                      </td>
-                      <td className="text-ink-500 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-ink-400" />
-                          <span className="font-medium" title={new Date(log.created_at).toLocaleString()}>
-                            {formatTime(log.created_at)}
+        <div className="space-y-3">
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="table-modern">
+                <thead>
+                  <tr>
+                    <th>Action</th>
+                    <th>User</th>
+                    <th>Description</th>
+                    <th>Table</th>
+                    <th>Record</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((log) => {
+                    const meta = ACTION_META[log.action_type ?? ''] || { 
+                      icon: ActivityIcon, 
+                      color: 'text-ink-700 bg-ink-100 ring-ink-200', 
+                      label: log.action_type || 'Activity' 
+                    };
+                    const Icon = meta.icon;
+                    return (
+                      <tr key={log.log_id}>
+                        <td>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ${meta.color}`}>
+                            <Icon className="w-3 h-3" />
+                            {meta.label}
                           </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td>
+                          {log.username ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 bg-gradient-to-br from-moss-500 to-accent-teal rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                {log.username.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="font-semibold text-ink-900">{log.username}</span>
+                            </div>
+                          ) : (
+                            <span className="text-ink-400">System</span>
+                          )}
+                        </td>
+                        <td className="max-w-md">
+                          <p className="text-ink-700 line-clamp-2">{log.description || '-'}</p>
+                        </td>
+                        <td>
+                          {log.table_name ? (
+                            <span className="chip text-[10px]">{log.table_name}</span>
+                          ) : '-'}
+                        </td>
+                        <td className="text-ink-500 tabular-nums">
+                          {log.record_id ? `#${log.record_id}` : '-'}
+                        </td>
+                        <td className="text-ink-500 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-ink-400" />
+                            <span className="font-medium" title={new Date(log.created_at).toLocaleString()}>
+                              {formatTime(log.created_at)}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-ink-500">
+              Page {page + 1} • {filtered.length} shown • {limit} per page {hasMore ? '(more available)' : '(end)'}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={!hasMore}
+                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -106,11 +106,11 @@ const getCategoryStats: RequestHandler = async (req, res) => {
   }
 };
 
-// Get recent activities
+// Get recent activities — paginated (limit/offset, safe 1-100, default 50 for logs, 10 for dashboard)
 const getRecentActivities: RequestHandler = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const safeLimit = Math.min(Math.max(limit, 1), 100); // safe between 1 and 100
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '10'), 10) || 10, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset || '0'), 10) || 0, 0);
 
     const [activities] = await pool.execute<RowDataPacket[]>(
       `SELECT al.log_id, al.user_id, u.username, al.action_type, al.table_name, 
@@ -118,7 +118,7 @@ const getRecentActivities: RequestHandler = async (req, res) => {
        FROM activity_logs al 
        LEFT JOIN users u ON al.user_id = u.user_id 
        ORDER BY al.created_at DESC 
-       LIMIT ${safeLimit}`
+       LIMIT ${limit} OFFSET ${offset}`
     );
 
     res.json({

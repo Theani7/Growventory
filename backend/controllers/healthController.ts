@@ -6,17 +6,19 @@ import { notifyAdminsAndSupervisors } from './notificationController';
 
 const VALID_HEALTH_STATUS = ['healthy', 'under_observation', 'poor', 'critical'];
 
-// Get all health logs with optional plant filter
+// Get all health logs with optional plant filter — paginated
 const getAllHealthLogs: RequestHandler = async (req, res) => {
   try {
     const { plant_id, health_status } = req.query;
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '50'), 10) || 50, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset || '0'), 10) || 0, 0);
 
     let query = `SELECT hl.*, p.name as plant_name, u.username as checked_by_name 
                  FROM plant_health_logs hl 
                  JOIN plants p ON hl.plant_id = p.plant_id 
                  LEFT JOIN users u ON hl.checked_by = u.user_id 
                  WHERE 1=1`;
-    const params = [];
+    const params: any[] = [];
 
     if (plant_id) {
       query += ` AND hl.plant_id = ?`;
@@ -28,7 +30,8 @@ const getAllHealthLogs: RequestHandler = async (req, res) => {
       params.push(String(health_status));
     }
 
-    query += ` ORDER BY hl.check_date DESC`;
+    query += ` ORDER BY hl.check_date DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
 
     const [logs] = await pool.execute<RowDataPacket[]>(query, params);
 

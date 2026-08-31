@@ -39,6 +39,7 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const [searchSelectedIndex, setSearchSelectedIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   const showNotificationToast = (notif: Notification) => {
     const meta: Record<string, { icon: LucideIcon; bg: string; text: string; ring: string; label: string }> = {
@@ -198,33 +199,44 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [searchOpen, closeSearch]);
 
-  // Debounced search
+  // Debounced search with AbortController to cancel stale requests
   useEffect(() => {
     if (!searchOpen || !searchQuery.trim()) {
+      searchAbortRef.current?.abort();
       setSearchResults({ plants: [], categories: [] });
       setSearchLoading(false);
       return;
     }
     setSearchLoading(true);
     const timer = setTimeout(async () => {
+      // Abort previous in-flight request
+      searchAbortRef.current?.abort();
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
       try {
         const [plantsRes, categoriesRes] = await Promise.all([
-          api.get(`/plants?search=${encodeURIComponent(searchQuery)}&limit=5`),
-          api.get('/categories'),
+          api.get(`/plants?search=${encodeURIComponent(searchQuery)}&limit=5`, { signal: controller.signal }),
+          api.get('/categories', { signal: controller.signal }),
         ]);
         const plants = (plantsRes.data.data || []) as Plant[];
         const allCategories = (categoriesRes.data.data || []) as Category[];
         const q = searchQuery.toLowerCase();
         const categories = allCategories.filter(c => c.category_name.toLowerCase().includes(q)).slice(0, 5);
         setSearchResults({ plants, categories });
-      } catch {
+      } catch (err: any) {
+        if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED' || controller.signal.aborted) return;
         setSearchResults({ plants: [], categories: [] });
       } finally {
-        setSearchLoading(false);
-        setSearchSelectedIndex(-1);
+        if (!controller.signal.aborted) {
+          setSearchLoading(false);
+          setSearchSelectedIndex(-1);
+        }
       }
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      searchAbortRef.current?.abort();
+    };
   }, [searchQuery, searchOpen]);
 
   const searchResultItems: { type: 'plant' | 'category'; id: number; label: string; subtitle: string; icon: LucideIcon }[] = [

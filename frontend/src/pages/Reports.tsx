@@ -38,7 +38,12 @@ const Reports = () => {
       toast.success('Report downloaded');
     } catch (error: any) {
       console.error('Download error:', error);
-      toast.error(error.response?.data?.message || 'Failed to download report');
+      // If server returned JSON blob, try to extract message
+      let msg = error.response?.data?.message;
+      if (error.response?.data instanceof Blob) {
+        try { const t = await error.response.data.text(); const j = JSON.parse(t); msg = j.message || msg; } catch {}
+      }
+      toast.error(msg || 'Failed to download report');
     } finally {
       setDownloading(null);
     }
@@ -124,7 +129,10 @@ const Reports = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {reports.map((report) => {
           const Icon = report.icon;
-          const isDownloading = downloading === report.key;
+          const isCsvDownloading = downloading === `${report.key}-csv`;
+          const isPdfDownloading = downloading === `${report.key}-pdf`;
+          const csvKey = `${report.key}-csv`;
+          const pdfKey = `${report.key}-pdf`;
           return (
             <div key={report.key} className="card card-hover p-6">
               <div className="flex items-start gap-4">
@@ -136,11 +144,11 @@ const Reports = () => {
                   <p className="text-sm text-ink-500 mt-1 leading-relaxed">{report.description}</p>
                   <div className="flex gap-2 mt-4">
                     <button
-                      onClick={() => downloadReport(report.key, report.csvEndpoint || report.endpoint || '', report.csvFilename || report.filename || '')}
-                      disabled={isDownloading}
-                      className="btn-primary flex-1"
+                      onClick={() => downloadReport(csvKey, report.csvEndpoint || report.endpoint || '', report.csvFilename || report.filename || '')}
+                      disabled={isCsvDownloading || isPdfDownloading}
+                      className="btn-primary flex-1 disabled:opacity-50"
                     >
-                      {isDownloading ? (
+                      {isCsvDownloading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Downloading...
@@ -154,12 +162,21 @@ const Reports = () => {
                     </button>
                     {report.pdfEndpoint && (
                       <button
-                        onClick={() => downloadReport(report.key, report.pdfEndpoint || '', report.pdfFilename || '')}
-                        disabled={isDownloading}
-                        className="btn-secondary flex-1"
+                        onClick={() => downloadReport(pdfKey, report.pdfEndpoint || '', report.pdfFilename || '')}
+                        disabled={isCsvDownloading || isPdfDownloading}
+                        className="btn-secondary flex-1 disabled:opacity-50"
                       >
-                        <FileText className="w-4 h-4" />
-                        PDF
+                        {isPdfDownloading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4" />
+                            PDF
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
