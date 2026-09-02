@@ -278,12 +278,15 @@ const updatePlant: RequestHandler = async (req, res) => {
 
 // Delete plant
 const deletePlant: RequestHandler = async (req, res) => {
+  const conn = await pool.getConnection();
   try {
+    await conn.beginTransaction();
     const { id } = req.params;
 
-    const [existing] = await pool.execute<RowDataPacket[]>('SELECT * FROM plants WHERE plant_id = ?', [id]);
+    const [existing] = await conn.execute<RowDataPacket[]>('SELECT * FROM plants WHERE plant_id = ? FOR UPDATE', [id]);
 
     if (existing.length === 0) {
+      await conn.rollback();
       return res.status(404).json({
         success: false,
         message: 'Plant not found.'
@@ -292,25 +295,36 @@ const deletePlant: RequestHandler = async (req, res) => {
 
     const plantName = existing[0].name;
 
-    // Perform soft delete to preserve audit trail (stock movements, health logs)
-    await pool.execute<ResultSetHeader>('UPDATE plants SET is_active = 0 WHERE plant_id = ?', [id]);
+    // Delete associated health logs
+    await conn.execute<ResultSetHeader>('DELETE FROM plant_health_logs WHERE plant_id = ?', [id]);
+
+    // Delete associated stock movements
+    await conn.execute<ResultSetHeader>('DELETE FROM stock_movements WHERE plant_id = ?', [id]);
+
+    // Delete the plant itself
+    await conn.execute<ResultSetHeader>('DELETE FROM plants WHERE plant_id = ?', [id]);
 
     // Log activity
-    await pool.execute<ResultSetHeader>(
+    await conn.execute<ResultSetHeader>(
       `INSERT INTO activity_logs (user_id, action_type, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)`,
-      [req.user!.user_id, 'DELETE', 'plants', id, `Deleted plant (soft-delete): ${plantName}`]
+      [req.user!.user_id, 'DELETE', 'plants', id, `Deleted plant and associated stock & health records: ${plantName}`]
     );
+
+    await conn.commit();
 
     res.json({
       success: true,
-      message: 'Plant deleted successfully.'
+      message: 'Plant and associated stock and health records deleted successfully.'
     });
   } catch (error: any) {
+    try { await conn.rollback(); } catch {}
     res.status(500).json({
       success: false,
       message: 'Failed to delete plant.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  } finally {
+    conn.release();
   }
 };
 

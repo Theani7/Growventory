@@ -29,7 +29,7 @@ const getAllMovements: RequestHandler = async (req, res) => {
                  JOIN plants p ON sm.plant_id = p.plant_id 
                  LEFT JOIN users u ON sm.created_by = u.user_id 
                  LEFT JOIN users au ON sm.approved_by = au.user_id
-                 WHERE 1=1`;
+                 WHERE p.is_active = 1`;
     const params: any[] = [];
 
     if (plant_id) {

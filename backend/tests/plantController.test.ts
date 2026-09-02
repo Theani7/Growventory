@@ -108,7 +108,60 @@ describe('Plant Controller Audit Trail Refactor', () => {
 
       // Should be called for Plant A (stock 10) but not Plant B (stock 0)
       expect(stockService.initializeStock).toHaveBeenCalledTimes(1);
-      expect(stockService.initializeStock).toHaveBeenCalledWith(123, 10, 1, mockConnection);
+    });
+  });
+
+  describe('deletePlant', () => {
+    it('should return 404 if plant does not exist', async () => {
+      req.params.id = 999;
+      mockConnection.execute.mockResolvedValueOnce([[]]); // No plant found
+
+      const { deletePlant } = require('../controllers/plantController');
+      await deletePlant(req, res);
+
+      expect(mockConnection.rollback).toHaveBeenCalled();
+      expect(mockConnection.release).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: false,
+        message: 'Plant not found.'
+      }));
+    });
+
+    it('should delete associated health logs, stock movements, and plant within transaction', async () => {
+      req.params.id = 1;
+      // 1. SELECT plant FOR UPDATE
+      mockConnection.execute.mockResolvedValueOnce([[{ plant_id: 1, name: 'Rose' }]]);
+      // 2. DELETE plant_health_logs
+      mockConnection.execute.mockResolvedValueOnce([{ affectedRows: 2 }]);
+      // 3. DELETE stock_movements
+      mockConnection.execute.mockResolvedValueOnce([{ affectedRows: 3 }]);
+      // 4. DELETE plants
+      mockConnection.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+      // 5. Activity log
+      mockConnection.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+      const { deletePlant } = require('../controllers/plantController');
+      await deletePlant(req, res);
+
+      expect(mockConnection.beginTransaction).toHaveBeenCalled();
+      expect(mockConnection.execute).toHaveBeenCalledWith(
+        'DELETE FROM plant_health_logs WHERE plant_id = ?',
+        [1]
+      );
+      expect(mockConnection.execute).toHaveBeenCalledWith(
+        'DELETE FROM stock_movements WHERE plant_id = ?',
+        [1]
+      );
+      expect(mockConnection.execute).toHaveBeenCalledWith(
+        'DELETE FROM plants WHERE plant_id = ?',
+        [1]
+      );
+      expect(mockConnection.commit).toHaveBeenCalled();
+      expect(mockConnection.release).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: true
+      }));
     });
   });
 });

@@ -17,7 +17,7 @@ const getAllHealthLogs: RequestHandler = async (req, res) => {
                  FROM plant_health_logs hl 
                  JOIN plants p ON hl.plant_id = p.plant_id 
                  LEFT JOIN users u ON hl.checked_by = u.user_id 
-                 WHERE 1=1`;
+                 WHERE p.is_active = 1`;
     const params: any[] = [];
 
     if (plant_id) {
