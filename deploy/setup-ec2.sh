@@ -258,7 +258,7 @@ fi
 pm2 save
 
 # Setup PM2 systemd startup hook
-$SUDO env PATH="$PATH" "$(which pm2)" startup systemd -u "$CURRENT_USER" --hp "$USER_HOME" >/dev/null 2>&1 || true
+$SUDO env PATH="$PATH" "$(command -v pm2)" startup systemd -u "$CURRENT_USER" --hp "$USER_HOME" >/dev/null 2>&1 || true
 $SUDO systemctl enable "pm2-$CURRENT_USER" 2>/dev/null || true
 
 # ------------------------------------------------------------------------------
