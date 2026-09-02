@@ -30,8 +30,7 @@ const getAllHealthLogs: RequestHandler = async (req, res) => {
       params.push(String(health_status));
     }
 
-    query += ` ORDER BY hl.check_date DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    query += ` ORDER BY hl.check_date DESC LIMIT ${limit} OFFSET ${offset}`;
 
     const [logs] = await pool.execute<RowDataPacket[]>(query, params);
 

@@ -45,8 +45,7 @@ const getAllMovements: RequestHandler = async (req, res) => {
       params.push(status);
     }
 
-    query += ` ORDER BY sm.movement_date DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    query += ` ORDER BY sm.movement_date DESC LIMIT ${limit} OFFSET ${offset}`;
 
     const [movements] = await pool.execute<RowDataPacket[]>(query, params);
 
