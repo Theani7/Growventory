@@ -22,7 +22,8 @@ const getAllPlants: RequestHandler = async (req, res) => {
 
     if (search) {
       query += ` AND (p.name LIKE ? OR p.scientific_name LIKE ? OR p.description LIKE ?)`;
-      const searchTerm = `%${search}%`;
+      const escaped = String(search).replace(/[%_]/g, '\\$&');
+      const searchTerm = `%${escaped}%`;
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
