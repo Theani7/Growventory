@@ -56,15 +56,18 @@ const createAndSendOTP = async (email: string, purpose: 'email_verification' | '
     [email, otpHash, purpose, expiresAt]
   );
 
-  // Send email — log only that OTP was created, never the code itself
+  console.log(`📧 [OTP CREATED] To: ${email} | Purpose: ${purpose} | Code: ${otp}`);
+
+  // Send email
   try {
     if (purpose === 'email_verification') {
       await sendVerificationEmail(email, otp, username);
     } else {
       await sendPasswordResetEmail(email, otp, username);
     }
+    console.log(`✅ [EMAIL DISPATCHED] To: ${email} via Gmail SMTP`);
   } catch (err: any) {
-    console.error(`Failed to send ${purpose} OTP to ${email}:`, err.message);
+    console.error(`❌ Failed to send ${purpose} OTP to ${email}:`, err.message);
   }
 
   return otp;

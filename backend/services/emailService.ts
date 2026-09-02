@@ -57,13 +57,14 @@ export const sendEmail = async (opts: SendMailOptions): Promise<boolean> => {
   }
 
   try {
-    await t.sendMail({
+    const info = await t.sendMail({
       from: `"${fromName}" <${from}>`,
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
       html: opts.html,
     });
+    console.log(`✅ [EMAIL SENT] MessageId: ${info.messageId} to ${opts.to}`);
     return true;
   } catch (err: any) {
     console.error('❌ Failed to send email:', err.message);
