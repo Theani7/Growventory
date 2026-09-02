@@ -17,3 +17,5 @@ yarn-error.log*
 .next
 .cache
 .vercel
+*.tsbuildinfo
+AWS_DEPLOYMENT_INFO.md
