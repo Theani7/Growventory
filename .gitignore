@@ -19,3 +19,4 @@ yarn-error.log*
 .vercel
 *.tsbuildinfo
 AWS_DEPLOYMENT_INFO.md
+AGENTS.md
