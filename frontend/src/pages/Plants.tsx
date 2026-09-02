@@ -13,6 +13,14 @@ import type { Category, Plant } from '../types';
 
 const API_HOST = import.meta.env.VITE_API_BASE_URL?.startsWith('http') ? new URL(import.meta.env.VITE_API_BASE_URL).origin : '';
 
+const getImageUrl = (url?: string | null): string => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  return `${API_HOST}${url}`;
+};
+
 interface PlantFormData {
   name: string;
   scientific_name: string;
@@ -236,7 +244,7 @@ const Plants = () => {
       location: plant.location || '',
       description: plant.description || '',
       image: null,
-      imagePreview: plant.image_url ? `${API_HOST}${plant.image_url}` : null
+      imagePreview: plant.image_url ? getImageUrl(plant.image_url) : null
     });
     setShowModal(true);
   };
@@ -450,7 +458,7 @@ const Plants = () => {
               <div className="aspect-[4/3] bg-gradient-to-br from-moss-50 to-blue-50 relative overflow-hidden">
                 {plant.image_url ? (
                   <img
-                    src={`${API_HOST}${plant.image_url}`}
+                    src={getImageUrl(plant.image_url)}
                     alt={plant.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -539,7 +547,7 @@ const Plants = () => {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-moss-50 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
                               {plant.image_url ? (
-                                <img src={`${API_HOST}${plant.image_url}`} alt={plant.name} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(plant.image_url)} alt={plant.name} className="w-full h-full object-cover" />
                               ) : (
                                 <Sprout className="w-5 h-5 text-moss-600" />
                               )}
