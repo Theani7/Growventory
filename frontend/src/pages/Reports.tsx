@@ -101,7 +101,7 @@ const Reports = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div>
         <p className="eyebrow">Export Center</p>
         <h1 className="page-title mt-1">Reports</h1>
@@ -109,7 +109,7 @@ const Reports = () => {
       </div>
 
       {/* Info banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss-700 via-moss-600 to-accent-teal p-6 shadow-elevated">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss-700 via-moss-600 to-accent-teal p-5 sm:p-6 shadow-elevated">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-1/4 w-56 h-56 bg-accent-mint/20 rounded-full blur-3xl"></div>
         <div className="relative flex items-start gap-4">
@@ -126,7 +126,7 @@ const Reports = () => {
       </div>
 
       {/* Reports grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {reports.map((report) => {
           const Icon = report.icon;
           const isCsvDownloading = downloading === `${report.key}-csv`;
@@ -134,7 +134,7 @@ const Reports = () => {
           const csvKey = `${report.key}-csv`;
           const pdfKey = `${report.key}-pdf`;
           return (
-            <div key={report.key} className="card card-hover p-6">
+            <div key={report.key} className="card card-hover p-4 sm:p-6">
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-2xl ${report.bg} ${report.text} ring-1 ${report.ring} flex items-center justify-center flex-shrink-0`}>
                   <Icon className="w-6 h-6" strokeWidth={2.2} />

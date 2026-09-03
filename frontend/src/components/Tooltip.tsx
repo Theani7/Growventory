@@ -42,7 +42,7 @@ const Tooltip = ({ text, children, icon = 'info', position = 'top' }: TooltipPro
       
       {visible && (
         <div
-          className={`absolute z-50 ${positionClasses[position]} px-3 py-1.5 bg-ink-950 text-white text-xs font-semibold rounded-lg shadow-elevated-lg whitespace-nowrap pointer-events-none ring-1 ring-white/10`}
+          className={`absolute z-50 ${positionClasses[position]} px-3 py-1.5 bg-ink-950 text-white text-xs font-semibold rounded-lg shadow-elevated-lg whitespace-normal max-w-[200px] sm:max-w-xs text-center break-words pointer-events-none ring-1 ring-white/10`}
           role="tooltip"
         >
           {text}

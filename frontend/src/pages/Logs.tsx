@@ -90,7 +90,7 @@ const Logs = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Audit Trail</p>
@@ -144,7 +144,7 @@ const Logs = () => {
 
       {/* Filters */}
       <div className="card p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ink-400" />
             <input
@@ -166,7 +166,7 @@ const Logs = () => {
           <select 
             value={filterAction} 
             onChange={(e) => setFilterAction(e.target.value)} 
-            className="input-field lg:w-44"
+            className="input-field w-full sm:w-auto sm:min-w-[140px] lg:w-44"
           >
             <option value="">All Actions</option>
             {actions.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -174,7 +174,7 @@ const Logs = () => {
           <select 
             value={filterTable} 
             onChange={(e) => setFilterTable(e.target.value)} 
-            className="input-field lg:w-44"
+            className="input-field w-full sm:w-auto sm:min-w-[140px] lg:w-44"
           >
             <option value="">All Tables</option>
             {tables.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -182,7 +182,7 @@ const Logs = () => {
           <select
             value={limit}
             onChange={(e) => { const v = Math.min(Math.max(parseInt(e.target.value, 10) || 50, 1), 100); setLimit(v); setPage(0); }}
-            className="input-field lg:w-28"
+            className="input-field w-full sm:w-auto lg:w-28"
             title="Rows per page"
           >
             <option value={25}>25 / page</option>
@@ -196,7 +196,7 @@ const Logs = () => {
           )}
         </div>
         {hasActiveFilters && (
-          <div className="mt-3 pt-3 border-t border-ink-100 flex items-center justify-between">
+          <div className="mt-3 pt-3 border-t border-ink-100 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Active filters</span>
             <span className="text-xs font-semibold text-ink-500">
               {filtered.length} of {logs.length} logs
@@ -211,7 +211,7 @@ const Logs = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ActivityIcon className="w-8 h-8 text-ink-400" />
           </div>
@@ -229,12 +229,12 @@ const Logs = () => {
               <table className="table-modern">
                 <thead>
                   <tr>
-                    <th>Action</th>
-                    <th>User</th>
-                    <th>Description</th>
-                    <th>Table</th>
-                    <th>Record</th>
-                    <th>When</th>
+                    <th className="whitespace-nowrap">Action</th>
+                    <th className="whitespace-nowrap">User</th>
+                    <th className="whitespace-nowrap">Description</th>
+                    <th className="whitespace-nowrap">Table</th>
+                    <th className="whitespace-nowrap">Record</th>
+                    <th className="whitespace-nowrap">When</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,22 +291,22 @@ const Logs = () => {
               </table>
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <p className="text-xs text-ink-500">
               Page {page + 1} • {filtered.length} shown • {limit} per page {hasMore ? '(more available)' : '(end)'}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-secondary w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={!hasMore}
-                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-secondary w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

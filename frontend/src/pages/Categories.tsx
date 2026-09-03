@@ -93,7 +93,7 @@ const Categories = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Library</p>
@@ -101,7 +101,7 @@ const Categories = () => {
           <p className="page-subtitle">Organize your plants into meaningful groups</p>
         </div>
         {canManage && (
-          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary">
+          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary w-full sm:w-auto">
             <Plus className="w-4 h-4" /> New Category
           </button>
         )}
@@ -112,7 +112,7 @@ const Categories = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : categories.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FolderTree className="w-8 h-8 text-ink-400" />
           </div>
@@ -137,7 +137,7 @@ const Categories = () => {
                       <FolderTree className="w-5 h-5" strokeWidth={2.2} />
                     </div>
                     {canManage && (
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEditModal(category)} className="btn-icon" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -175,7 +175,7 @@ const Categories = () => {
 
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">{editingCategory ? 'Edit Category' : 'New Category'}</h2>
@@ -194,9 +194,9 @@ const Categories = () => {
                 <label className="label">Description</label>
                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="input-field" rows={3} placeholder="Optional description..." />
               </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button type="submit" className="btn-primary w-full sm:w-auto" disabled={submitting}>
                   {submitting ? 'Saving...' : editingCategory ? 'Update' : 'Create'}
                 </button>
               </div>
@@ -208,7 +208,7 @@ const Categories = () => {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -228,9 +228,9 @@ const Categories = () => {
                 <p className="text-sm text-ink-500 mt-1">{deleteTarget.plant_count || 0} plants in this category</p>
               </div>
               <p className="text-sm text-ink-600">Are you sure you want to delete this category? This cannot be undone.</p>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
-                <button onClick={() => handleDelete(deleteTarget)} className="btn-danger">Delete Category</button>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget)} className="btn-danger w-full sm:w-auto">Delete Category</button>
               </div>
             </div>
           </div>

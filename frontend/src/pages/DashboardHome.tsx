@@ -140,7 +140,7 @@ const DashboardHome = () => {
     .reduce((acc, h) => acc + h.count, 0) || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       {/* Hero / Greeting */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-moss-700 via-moss-600 to-accent-teal p-6 sm:p-8 lg:p-10 shadow-elevated-lg">
         <div className="absolute top-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
@@ -163,7 +163,7 @@ const DashboardHome = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard 
           label="Total Plants" 
           value={overview?.total_plants || 0} 
@@ -197,7 +197,7 @@ const DashboardHome = () => {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Health distribution */}
-        <div className="card p-4 sm:p-6 lg:col-span-1">
+        <div className="card p-4 sm:p-6 min-w-0 overflow-hidden w-full lg:col-span-1">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <p className="eyebrow">Distribution</p>
@@ -255,7 +255,7 @@ const DashboardHome = () => {
         </div>
 
         {/* Stock by Category */}
-        <div className="card p-4 sm:p-6 lg:col-span-2">
+        <div className="card p-4 sm:p-6 min-w-0 overflow-hidden w-full lg:col-span-2">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <p className="eyebrow">Inventory</p>
@@ -271,6 +271,9 @@ const DashboardHome = () => {
                   tick={{ fontSize: 10, fill: '#727b8e' }}
                   axisLine={false}
                   tickLine={false}
+                  interval={0}
+                  height={50}
+                  tickFormatter={(v: string) => (v.length > 10 ? v.slice(0, 10) + '…' : v)}
                 />
                 <YAxis tick={{ fontSize: 10, fill: '#727b8e' }} axisLine={false} tickLine={false} />
                 <ChartTooltip
@@ -302,8 +305,8 @@ const DashboardHome = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="card p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="card p-4 sm:p-6 min-w-0 overflow-hidden">
               <h3 className="font-bold text-ink-900 mb-4">Stock Movement Trends · 30 days</h3>
               {advancedAnalytics.stock_trends && advancedAnalytics.stock_trends.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
@@ -314,6 +317,9 @@ const DashboardHome = () => {
                       tick={{ fontSize: 10, fill: '#727b8e' }}
                       axisLine={false}
                       tickLine={false}
+                      interval={0}
+                      height={50}
+                      tickFormatter={(v: string) => (v.length > 10 ? v.slice(0, 10) + '…' : v)}
                     />
                     <YAxis tick={{ fontSize: 10, fill: '#727b8e' }} axisLine={false} tickLine={false} />
                     <ChartTooltip
@@ -335,7 +341,7 @@ const DashboardHome = () => {
               )}
             </div>
 
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6 min-w-0 overflow-hidden">
               <h3 className="font-bold text-ink-900 mb-4">Category Performance</h3>
               {advancedAnalytics.category_performance && advancedAnalytics.category_performance.length > 0 ? (
                 <div className="space-y-1">
@@ -370,9 +376,9 @@ const DashboardHome = () => {
       )}
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Low stock */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
@@ -419,7 +425,7 @@ const DashboardHome = () => {
         </div>
 
         {/* Recent activity */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-moss-50 rounded-lg flex items-center justify-center">

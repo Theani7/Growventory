@@ -55,7 +55,7 @@ scrolled
             : 'bg-transparent border-b border-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[72px]">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img src="/logo.png" alt="Growventory Logo" className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-105" />
@@ -68,7 +68,7 @@ scrolled
             </div>
             <div className="flex items-center gap-2">
               <Link to="/login" className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors">Sign in</Link>
-              <Link to="/register" className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#1a3a2a] text-white text-sm font-semibold rounded-full hover:bg-[#143021] transition-all shadow-sm hover:shadow-md hover:-translate-y-px">
+              <Link to="/register" className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 min-h-[44px] bg-[#1a3a2a] text-white text-sm font-semibold rounded-full hover:bg-[#143021] transition-all shadow-sm hover:shadow-md hover:-translate-y-px">
                 Get started
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -79,16 +79,16 @@ scrolled
 
       {/* Hero Split Editorial */}
       <section className="relative min-h-[100dvh] flex items-center pt-[72px] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full py-12 lg:py-0">
-          <div className="grid lg:grid-cols-[1.05fr_1.15fr] gap-10 lg:gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-8 sm:py-12 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-10 lg:gap-8 items-center min-w-0">
             {/* Left copy */}
             <Reveal variant="fade-up" duration={800}>
-              <div className="max-w-[560px]">
+              <div className="max-w-[560px] min-w-0 break-words">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eef6ee] border border-[#d6ead6] rounded-full text-[12px] font-semibold tracking-wide text-[#1d4d2e]">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   Live inventory • Cloud sync
                 </div>
-                <h1 className="mt-6 text-[42px] sm:text-[54px] lg:text-[58px] font-bold tracking-[-0.03em] leading-[0.95] text-stone-900">
+                <h1 className="mt-6 text-[32px] leading-[1.05] sm:text-[54px] sm:leading-[0.95] lg:text-[58px] font-bold tracking-[-0.03em] text-stone-900 min-w-0 break-words">
                   Smart nursery<br />
                   <span className="text-[#1d4d2e]">management,</span><br />
                   without the chaos.
@@ -110,12 +110,12 @@ scrolled
 
             {/* Right image hero-greenhouse */}
             <Reveal variant="blur-in" delay={200} duration={900}>
-              <div className="relative lg:ml-4">
-                <div className="relative rounded-[24px] overflow-hidden bg-stone-100 shadow-2xl shadow-stone-900/10 border border-stone-200">
+              <div className="relative lg:ml-4 min-w-0 overflow-hidden">
+                <div className="relative rounded-[24px] overflow-hidden bg-stone-100 shadow-2xl shadow-stone-900/10 border border-stone-200 min-w-0">
                   <img
                     src="/hero-greenhouse.png"
                     alt="Modern greenhouse interior with lush plants on wooden benches, sunlit"
-                    className="w-full h-[520px] lg:h-[560px] object-cover"
+                    className="w-full h-[300px] sm:h-[420px] lg:h-[560px] object-cover"
                     loading="eager"
                   />
                   {/* Subtle gradient scrim for legibility of overlay card */}
@@ -155,8 +155,8 @@ scrolled
 
       {/* Trust strip */}
       <section className="py-8 border-y border-stone-100 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-4 sm:gap-6">
             <p className="text-xs font-semibold tracking-[0.14em] uppercase text-stone-400">Powering nurseries that grow</p>
             <div className="flex flex-wrap gap-6 text-sm font-semibold tracking-tight text-stone-400">
               {['Inventory', 'Health', 'Analytics', 'Reports', 'Tasks', 'Stock'].map((w) => (
@@ -169,8 +169,8 @@ scrolled
       </section>
 
       {/* Stats subtle */}
-      <section className="py-12 px-6 lg:px-8 bg-[#f6f7f5] border-b border-stone-100">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-[#f6f7f5] border-b border-stone-100">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
           {metrics.map((m) => (
             <div key={m.label} className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-xl bg-[#1a3a2a] flex items-center justify-center flex-shrink-0">
@@ -186,10 +186,10 @@ scrolled
       </section>
 
       {/* Features Bento with real image */}
-      <section id="features" className="py-20 lg:py-28 px-6 lg:px-8 bg-white">
+      <section id="features" className="py-14 sm:py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl lg:text-[42px] font-bold tracking-tight leading-[0.95] text-stone-900">
+          <div className="max-w-2xl min-w-0 break-words">
+            <h2 className="text-2xl sm:text-3xl lg:text-[42px] font-bold tracking-tight leading-[0.95] text-stone-900">
               Everything you need.<br />
               <span className="text-stone-400">Nothing you don't.</span>
             </h2>
@@ -247,17 +247,17 @@ scrolled
       </section>
 
       {/* How it works */}
-      <section id="how" className="py-20 px-6 lg:px-8 bg-[#f6f7f5] border-y border-stone-100">
+      <section id="how" className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#f6f7f5] border-y border-stone-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-stone-900 leading-none">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-stone-900 leading-none min-w-0 break-words">
               Live in three<br />
               deliberate steps.
             </h2>
             <p className="text-sm leading-relaxed text-stone-600 max-w-[36ch]">No onboarding theatre. Create an account, add your plants and start tracking. The rest is just growing.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 gap-6 sm:gap-8">
             {steps.map((s, i) => (
               <div key={s.step} className="relative bg-white rounded-[16px] border border-stone-200 p-6 pt-8 hover:shadow-md transition-shadow">
                 <div className="absolute -top-3 left-6 px-3 py-1 bg-[#1a3a2a] text-white text-xs font-bold tracking-wide rounded-full">{s.step}</div>
@@ -271,15 +271,15 @@ scrolled
       </section>
 
       {/* Why Team image split */}
-      <section id="why" className="py-20 lg:py-28 px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
+      <section id="why" className="py-14 sm:py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10 items-center min-w-0">
           {/* Image */}
-          <div className="lg:col-span-6">
-            <div className="relative rounded-[20px] overflow-hidden bg-stone-100 border border-stone-200">
+          <div className="lg:col-span-6 min-w-0">
+            <div className="relative rounded-[20px] overflow-hidden bg-stone-100 border border-stone-200 min-w-0">
               <img
                 src="/team-nursery.jpeg"
                 alt="Three nursery workers in aprons looking at tablet with growth data inside greenhouse"
-                className="w-full h-[480px] object-cover object-center"
+                className="w-full h-[280px] sm:h-[400px] lg:h-[480px] object-cover object-center"
                 loading="lazy"
               />
               <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur rounded-xl border border-stone-200 p-4 flex items-center gap-3">
@@ -296,7 +296,7 @@ scrolled
 
           {/* Content */}
           <div className="lg:col-span-6 lg:pl-8">
-            <h2 className="text-3xl lg:text-[40px] font-bold tracking-tight leading-[0.95] text-stone-900">
+            <h2 className="text-2xl sm:text-3xl lg:text-[40px] font-bold tracking-tight leading-[0.95] text-stone-900 min-w-0 break-words">
               Built for nursery<br />
               professionals.
             </h2>
@@ -323,18 +323,18 @@ scrolled
                 );
               })}
             </ul>
-            <div className="mt-8 flex gap-3">
-              <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a3a2a] text-white text-sm font-semibold rounded-full hover:bg-[#143021] transition-colors">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto bg-[#1a3a2a] text-white text-sm font-semibold rounded-full hover:bg-[#143021] transition-colors">
                 Create your account <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="#features" className="inline-flex items-center px-6 py-3 bg-white border border-stone-200 text-stone-700 text-sm font-semibold rounded-full hover:bg-stone-50">Explore features</a>
+              <a href="#features" className="inline-flex items-center justify-center px-6 py-3 min-h-[44px] w-full sm:w-auto bg-white border border-stone-200 text-stone-700 text-sm font-semibold rounded-full hover:bg-stone-50">Explore features</a>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA aerial image background */}
-      <section className="relative mx-6 lg:mx-8 my-10 rounded-[24px] overflow-hidden border border-stone-200">
+      <section className="relative mx-4 sm:mx-6 lg:mx-8 my-10 rounded-[24px] overflow-hidden border border-stone-200 min-w-0">
         <img
           src="/cta-aerial.png"
           alt="Aerial view of nursery fields at golden hour with neat rows of seedlings"
@@ -343,8 +343,8 @@ scrolled
         />
         <div className="absolute inset-0 bg-[#1a3a2a]/80 backdrop-blur-[1px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        <div className="relative max-w-3xl mx-auto text-center px-6 py-20 lg:py-28">
-          <h2 className="text-3xl lg:text-5xl font-bold tracking-tight text-white leading-none">
+        <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6 py-14 sm:py-20 lg:py-28 min-w-0 break-words">
+          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white leading-none min-w-0 break-words">
             Ready to grow<br />
             without the guesswork?
           </h2>
@@ -364,10 +364,10 @@ scrolled
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 lg:px-8 bg-[#0f1f14] border-t border-white/10">
+      <footer className="py-10 sm:py-12 px-4 sm:px-6 lg:px-8 bg-[#0f1f14] border-t border-white/10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="col-span-2 md:col-span-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="col-span-1 sm:col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5">
                 <img src="/logo.png" alt="Growventory" className="w-9 h-9 object-contain" />
                 <span className="font-bold text-white">Growventory</span>

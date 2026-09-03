@@ -86,7 +86,7 @@ const role = user?.role_name?.toLowerCase();
   };
 
   return (
-    <aside className={`h-full bg-white border-r border-ink-100 flex flex-col transition-all duration-300 ease-in-out ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`h-full bg-white border-r border-ink-100 flex flex-col transition-all duration-300 ease-in-out ${collapsed ? 'w-20' : 'w-64 max-w-[85vw]'}`}>
       {/* Logo */}
       <div className={`px-5 py-5 ${collapsed ? 'px-3' : ''}`}>
         <NavLink to="/dashboard" className="flex items-center gap-3 group" onClick={onClose}>
@@ -101,7 +101,7 @@ const role = user?.role_name?.toLowerCase();
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-2 overflow-y-auto">
+      <nav className="flex-1 px-3 py-2 overflow-y-auto overscroll-contain scroll-touch">
         {!collapsed && (
           <p className="text-[10px] font-bold text-ink-400 uppercase tracking-[0.14em] px-3 mb-2">
             Main

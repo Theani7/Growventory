@@ -68,7 +68,7 @@ const Login = () => {
       {/* Left Form */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
-        <div className="h-[72px] flex items-center justify-between px-6 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
+        <div className="h-[72px] flex items-center justify-between px-4 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Growventory" className="w-9 h-9 object-contain" />
             <span className="font-bold text-[16px] tracking-tight text-stone-900">Growventory</span>
@@ -78,10 +78,10 @@ const Login = () => {
           </Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 lg:px-12 py-10">
-          <div className="w-full max-w-[420px]">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-10 lg:px-12 py-6 sm:py-10">
+          <div className="w-full max-w-[420px] min-w-0 mx-auto">
             <div className="mb-8">
-              <h1 className="text-[32px] font-bold tracking-tight text-stone-900 leading-none">Welcome back</h1>
+              <h1 className="text-[26px] sm:text-[32px] font-bold tracking-tight text-stone-900 leading-none min-w-0 break-words">Welcome back</h1>
               <p className="mt-2 text-sm text-stone-600">
                 New to Growventory?{' '}
                 <Link to="/register" className="font-semibold text-[#1d4d2e] hover:underline">
@@ -103,11 +103,11 @@ const Login = () => {
                         <p className="text-sm text-amber-800/80 mt-1 leading-relaxed">{error}</p>
                       </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button onClick={() => navigate(`/verify-email?email=${encodeURIComponent(verifyEmail)}`)} className="py-2.5 rounded-full bg-[#1a3a2a] text-white text-sm font-semibold hover:bg-[#143021]">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button onClick={() => navigate(`/verify-email?email=${encodeURIComponent(verifyEmail)}`)} className="py-2.5 min-h-[44px] w-full rounded-full bg-[#1a3a2a] text-white text-sm font-semibold hover:bg-[#143021]">
                         Enter code
                       </button>
-                      <button onClick={handleResendVerification} disabled={isResending} className="py-2.5 rounded-full bg-white border border-amber-200 text-amber-800 text-sm font-semibold hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-1">
+                      <button onClick={handleResendVerification} disabled={isResending} className="py-2.5 min-h-[44px] w-full rounded-full bg-white border border-amber-200 text-amber-800 text-sm font-semibold hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-1">
                         {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Resend
                       </button>
                     </div>
@@ -186,7 +186,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60"
+                className="w-full min-h-[44px] mt-2 inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60"
               >
                 {isLoading ? (
                   <>
@@ -202,7 +202,7 @@ const Login = () => {
           </div>
         </div>
 
-        <p className="hidden lg:block text-center text-xs text-stone-400 pb-6">© {new Date().getFullYear()} Growventory</p>
+        <p className="hidden lg:block text-center text-xs text-stone-400 pb-6 pb-safe">© {new Date().getFullYear()} Growventory</p>
       </div>
 
       {/* Right Image */}

@@ -54,7 +54,7 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
     toast.custom((t) => (
       <div
-        className={`${t.visible ? 'animate-slide-up' : 'opacity-0'} max-w-sm w-full bg-white shadow-elevated-lg rounded-2xl pointer-events-auto overflow-hidden cursor-pointer hover:shadow-elevated-lg transition-shadow ring-1 ring-ink-100`}
+        className={`${t.visible ? 'animate-slide-up' : 'opacity-0'} max-w-[calc(100vw-2rem)] sm:max-w-sm w-full bg-white shadow-elevated-lg rounded-2xl pointer-events-auto overflow-hidden cursor-pointer hover:shadow-elevated-lg transition-shadow ring-1 ring-ink-100`}
         onClick={() => {
           toast.dismiss(t.id);
           navigate('/dashboard/notifications');
@@ -277,9 +277,9 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   return (
     <>
       <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-ink-100">
-        <div className="flex items-center justify-between h-full px-4 lg:px-8">
+        <div className="flex items-center justify-between h-full px-3 sm:px-4 lg:px-8">
           {/* Left */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
               onClick={onMenuClick}
               className="lg:hidden btn-icon min-h-[44px] min-w-[44px]"
@@ -399,10 +399,13 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
 
           {/* Right */}
           <div className="flex items-center gap-1.5">
+            <button onClick={openSearch} className="btn-icon lg:hidden" aria-label="Search">
+              <Search className="w-5 h-5" />
+            </button>
             {user?.role_name?.toLowerCase() !== 'auditor' && (
               <button
                 onClick={() => navigate('/dashboard/notifications')}
-                className="btn-icon relative"
+                className="btn-icon relative min-h-[44px] min-w-[44px]"
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
@@ -474,7 +477,7 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-elevated-lg ring-1 ring-ink-100 py-1 z-20 animate-fade-in">
+                  <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-elevated-lg ring-1 ring-ink-100 py-1 z-20 animate-fade-in">
                     <div className="px-4 py-3 border-b border-ink-100">
                       <p className="text-sm font-bold text-ink-900 truncate">{user?.username}</p>
                       <p className="text-xs text-ink-500 truncate">{user?.email}</p>
@@ -505,11 +508,93 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
         </div>
       </header>
 
+      {/* Mobile search overlay */}
+      {searchOpen && (
+        <div className="lg:hidden fixed inset-x-0 top-16 z-40 bg-white border-b border-ink-100 p-3 shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search plants, categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="w-full pl-10 pr-4 py-2.5 bg-ink-50 rounded-xl text-base text-ink-900 placeholder:text-ink-400 ring-1 ring-transparent focus:outline-none focus:ring-1 focus:ring-ink-300 focus:bg-white transition-all"
+              />
+            </div>
+            <button
+              onClick={closeSearch}
+              className="btn-icon shrink-0"
+              aria-label="Close search"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          {(searchLoading || searchResultItems.length > 0 || searchQuery.trim()) && (
+            <div className="mt-2 max-h-[60vh] overflow-y-auto">
+              {searchLoading && (
+                <div className="px-4 py-6 text-center text-ink-400 text-sm">
+                  <div className="animate-spin w-5 h-5 border-2 border-ink-300 border-t-transparent rounded-full mx-auto mb-2" />
+                  Searching...
+                </div>
+              )}
+              {!searchLoading && searchQuery.trim() && searchResultItems.length === 0 && (
+                <div className="px-4 py-6 text-center text-ink-400 text-sm">
+                  No results found for &quot;{searchQuery}&quot;
+                </div>
+              )}
+              {!searchLoading && searchResults.plants.length > 0 && (
+                <div>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-ink-400 uppercase tracking-wider">Plants</div>
+                  {searchResults.plants.map((plant) => (
+                    <button
+                      key={`m-plant-${plant.plant_id}`}
+                      onClick={() => handleResultClick({ type: 'plant', id: plant.plant_id, label: plant.name, subtitle: plant.scientific_name || plant.category_name || 'Plant', icon: Sprout })}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-ink-50 rounded-lg transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-moss-50 text-moss-600 flex items-center justify-center flex-shrink-0">
+                        <Sprout className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink-900 truncate">{plant.name}</p>
+                        <p className="text-xs text-ink-500 truncate">{plant.scientific_name || plant.category_name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!searchLoading && searchResults.categories.length > 0 && (
+                <div>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-ink-400 uppercase tracking-wider">Categories</div>
+                  {searchResults.categories.map((cat) => (
+                    <button
+                      key={`m-cat-${cat.category_id}`}
+                      onClick={() => handleResultClick({ type: 'category', id: cat.category_id, label: cat.category_name, subtitle: `${cat.plant_count || 0} plants`, icon: FolderOpen })}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-ink-50 rounded-lg transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-accent-teal/10 text-accent-teal flex items-center justify-center flex-shrink-0">
+                        <FolderOpen className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink-900 truncate">{cat.category_name}</p>
+                        <p className="text-xs text-ink-500 truncate">{cat.plant_count || 0} plants</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-ink-950/60 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
-          <div className="relative bg-white rounded-3xl shadow-elevated-lg max-w-md w-full overflow-hidden animate-slide-up">
+          <div className="relative bg-white rounded-3xl shadow-elevated-lg max-w-md w-[calc(100vw-2rem)] overflow-hidden animate-slide-up">
             <div className="bg-gradient-to-br from-red-500 to-red-600 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
@@ -522,12 +607,12 @@ const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
               </div>
             </div>
             
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               <p className="text-ink-600 text-sm leading-relaxed mb-6">
                 Are you sure you want to logout? You'll need to sign in again to access your dashboard.
               </p>
               
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
                   className="btn-secondary flex-1"

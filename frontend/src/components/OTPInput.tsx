@@ -64,7 +64,7 @@ const OTPInput = ({ value, onChange, length = 4, disabled }: OTPInputProps) => {
   };
 
   return (
-    <div className="flex gap-3 justify-center" onPaste={handlePaste}>
+    <div className="flex gap-2 sm:gap-3 justify-center flex-wrap sm:flex-nowrap max-w-full" onPaste={handlePaste}>
       {Array.from({ length }).map((_, i) => (
         <input
           key={i}
@@ -77,7 +77,7 @@ const OTPInput = ({ value, onChange, length = 4, disabled }: OTPInputProps) => {
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           disabled={disabled}
-          className="w-14 h-14 text-center text-2xl font-bold tracking-widest bg-white border-2 border-stone-200 rounded-xl focus:border-[#1a3a2a] focus:ring-4 focus:ring-[#1a3a2a]/10 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold tracking-widest bg-white border-2 border-stone-200 rounded-xl focus:border-[#1a3a2a] focus:ring-4 focus:ring-[#1a3a2a]/10 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         />
       ))}
     </div>

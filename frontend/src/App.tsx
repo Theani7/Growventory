@@ -38,7 +38,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Toaster
-          position="top-right"
+          position="top-center"
+          gutter={12}
+          containerStyle={{ top: '1rem', left: '1rem', right: '1rem' }}
           toastOptions={{
             duration: 3000,
             style: {
@@ -49,6 +51,8 @@ function App() {
               fontSize: '14px',
               fontWeight: 500,
               padding: '12px 16px',
+              maxWidth: 'calc(100vw - 2rem)',
+              wordBreak: 'break-word',
             },
             success: {
               iconTheme: { primary: '#1d8147', secondary: '#fff' },

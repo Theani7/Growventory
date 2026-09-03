@@ -154,24 +154,24 @@ const Stock = () => {
   const hasActiveFilters = filterPlant || filterType || filterStatus;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Movements</p>
           <h1 className="page-title mt-1">Stock</h1>
           <p className="page-subtitle">Track inventory transactions and approve adjustments</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
           {totals.pending > 0 && isApprover && (
             <button
               onClick={() => { setFilterStatus('pending'); fetchMovements({ status: 'pending' }); }}
-              className="btn-secondary !ring-amber-200 !text-amber-700 hover:!bg-amber-50"
+              className="btn-secondary !ring-amber-200 !text-amber-700 hover:!bg-amber-50 w-full sm:w-auto"
             >
               <Clock className="w-4 h-4" /> {totals.pending} Pending
             </button>
           )}
           {user && (
-            <button onClick={() => setShowModal(true)} className="btn-primary">
+            <button onClick={() => setShowModal(true)} className="btn-primary w-full sm:w-auto">
               <Plus className="w-4 h-4" /> Record Movement
             </button>
           )}
@@ -179,8 +179,8 @@ const Stock = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card card-hover">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="stat-card card-hover p-4 sm:p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 rounded-xl bg-moss-50 text-moss-700 ring-1 ring-moss-100 flex items-center justify-center">
               <ArrowDownToLine className="w-5 h-5" strokeWidth={2.2} />
@@ -190,7 +190,7 @@ const Stock = () => {
           <p className="stat-value mt-1">{totals.in}</p>
           <p className="text-xs text-ink-400 mt-1">approved units</p>
         </div>
-        <div className="stat-card card-hover">
+        <div className="stat-card card-hover p-4 sm:p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 rounded-xl bg-red-50 text-red-700 ring-1 ring-red-100 flex items-center justify-center">
               <ArrowUpFromLine className="w-5 h-5" strokeWidth={2.2} />
@@ -200,7 +200,7 @@ const Stock = () => {
           <p className="stat-value mt-1">{totals.out}</p>
           <p className="text-xs text-ink-400 mt-1">approved units</p>
         </div>
-        <div className="stat-card card-hover">
+        <div className="stat-card card-hover p-4 sm:p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 flex items-center justify-center">
               <RefreshCw className="w-5 h-5" strokeWidth={2.2} />
@@ -210,7 +210,7 @@ const Stock = () => {
           <p className="stat-value mt-1">{totals.adj}</p>
           <p className="text-xs text-ink-400 mt-1">approved</p>
         </div>
-        <div className="stat-card card-hover">
+        <div className="stat-card card-hover p-4 sm:p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100 flex items-center justify-center">
               <Clock className="w-5 h-5" strokeWidth={2.2} />
@@ -256,14 +256,14 @@ const Stock = () => {
             <option value="rejected">Rejected</option>
           </select>
 
-          <div className="flex gap-2">
-            <button onClick={fetchMovements} className="btn-primary">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+            <button onClick={fetchMovements} className="btn-primary w-full sm:w-auto">
               <Filter className="w-4 h-4" /> Apply
             </button>
             {hasActiveFilters && (
               <button
                 onClick={() => { setFilterPlant(''); setFilterType(''); setFilterStatus(''); fetchMovements({ plant: '', type: '', status: '' }); }}
-                className="btn-secondary"
+                className="btn-secondary w-full sm:w-auto"
               >
                 <X className="w-4 h-4" /> Clear
               </button>
@@ -307,7 +307,7 @@ const Stock = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : movements.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ArrowLeftRight className="w-8 h-8 text-ink-400" />
           </div>
@@ -321,7 +321,7 @@ const Stock = () => {
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x [-webkit-overflow-scrolling:touch]">
             <table className="table-modern">
               <thead>
                 <tr>
@@ -423,7 +423,7 @@ const Stock = () => {
       {/* Add Movement Modal */}
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">Record Movement</h2>
@@ -447,7 +447,7 @@ const Stock = () => {
               </div>
               <div>
                 <label className="label">Movement Type *</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {['IN', 'OUT', 'ADJUSTMENT'].map((t) => {
                     const meta = movementMeta(t);
                     const Icon = meta.icon;
@@ -457,7 +457,7 @@ const Stock = () => {
                         key={t}
                         type="button"
                         onClick={() => setFormData({ ...formData, movement_type: t })}
-                        className={`p-3 rounded-xl ring-1 transition-all text-xs font-semibold flex flex-col items-center gap-1.5 ${
+                        className={`p-3 rounded-xl ring-1 transition-all text-xs sm:text-sm font-semibold flex flex-col items-center gap-1.5 min-h-[44px] justify-center ${
                           active ? 'ring-moss-600 bg-moss-600 text-white shadow-md' : 'ring-ink-200 hover:ring-moss-400 text-ink-600 bg-white'
                         }`}
                       >
@@ -479,9 +479,9 @@ const Stock = () => {
                 <label className="label">Notes</label>
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="input-field" rows={2} placeholder="Optional notes..." />
               </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button type="submit" className="btn-primary w-full sm:w-auto" disabled={submitting}>
                   {submitting ? 'Submitting...' : (user?.role_name?.toLowerCase() === 'staff' ? 'Submit' : 'Record')}
                 </button>
               </div>
@@ -493,7 +493,7 @@ const Stock = () => {
       {/* Reject Modal */}
       {rejectTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -517,9 +517,9 @@ const Stock = () => {
                   placeholder="Why is this being rejected?"
                 />
               </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary">Cancel</button>
-                <button onClick={handleReject} disabled={actioning === rejectTarget} className="btn-danger">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+                <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button onClick={handleReject} disabled={actioning === rejectTarget} className="btn-danger w-full sm:w-auto">
                   {actioning === rejectTarget ? 'Rejecting...' : 'Reject Movement'}
                 </button>
               </div>
@@ -531,7 +531,7 @@ const Stock = () => {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -554,9 +554,9 @@ const Stock = () => {
                 <p className="text-sm text-amber-800 font-semibold">⚠️ Warning</p>
                 <p className="text-xs text-amber-700 mt-1">Approved movements will reverse the stock change when deleted.</p>
               </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
-                <button onClick={() => handleDelete(deleteTarget.movement_id)} className="btn-danger">Delete Movement</button>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget.movement_id)} className="btn-danger w-full sm:w-auto">Delete Movement</button>
               </div>
             </div>
           </div>

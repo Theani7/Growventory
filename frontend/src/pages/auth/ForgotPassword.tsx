@@ -114,8 +114,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
-      <div className="flex-1 flex flex-col px-6 sm:px-12 lg:px-16 xl:px-24 py-8">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+      <div className="flex-1 flex flex-col w-full min-w-0 px-4 sm:px-12 lg:px-16 xl:px-24 py-6 sm:py-8">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="logo" className="w-12 h-12 object-contain" />
@@ -126,7 +126,7 @@ const ForgotPassword = () => {
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto py-12">
+        <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto min-w-0 py-8 sm:py-12">
           {/* Progress */}
           <div className="flex items-center gap-2 mb-8">
             {(['email', 'otp', 'reset'] as Step[]).map((s, i) => (
@@ -145,7 +145,7 @@ const ForgotPassword = () => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#eef6ee] text-[#1d4d2e] text-xs font-semibold rounded-full mb-4">
                   <Sparkles className="w-3 h-3" /> Forgot password
                 </span>
-                <h1 className="text-4xl font-bold text-stone-900 tracking-tight">Reset your password</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight min-w-0 break-words">Reset your password</h1>
                 <p className="mt-3 text-stone-500">Enter your email and we'll send a 4-digit reset code.</p>
               </div>
               <form onSubmit={handleSendOTP} className="space-y-5">
@@ -156,7 +156,7 @@ const ForgotPassword = () => {
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="input-field pl-10" />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base disabled:opacity-70">
+                <button type="submit" disabled={loading} className="btn-primary w-full min-h-[44px] py-3.5 text-base disabled:opacity-70">
                   {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending...</> : <>Send reset code <ArrowRight className="w-5 h-5" /></>}
                 </button>
                 <p className="text-center text-sm text-stone-500">Remembered? <Link to="/login" className="text-[#1d4d2e] font-semibold hover:underline">Sign in</Link></p>
@@ -167,7 +167,7 @@ const ForgotPassword = () => {
           {step === 'otp' && (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Enter reset code</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight min-w-0 break-words">Enter reset code</h1>
                 <p className="mt-2 text-stone-500">Code sent to <span className="font-semibold text-stone-900">{email}</span> • Valid 10 min</p>
               </div>
               <form onSubmit={handleVerifyOTP} className="space-y-6">
@@ -176,7 +176,7 @@ const ForgotPassword = () => {
                   <OTPInput value={otp} onChange={setOtp} length={4} disabled={loading} />
                   <p className="text-xs text-stone-500 text-center mt-3">Check spam folder • 10-minute expiry</p>
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base disabled:opacity-70">
+                <button type="submit" disabled={loading} className="btn-primary w-full min-h-[44px] py-3.5 text-base disabled:opacity-70">
                   {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</> : <>Verify code <ArrowRight className="w-5 h-5" /></>}
                 </button>
                 <div className="flex items-center justify-between text-sm">
@@ -193,7 +193,7 @@ const ForgotPassword = () => {
           {step === 'reset' && (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Set new password</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight min-w-0 break-words">Set new password</h1>
                 <p className="mt-2 text-stone-500">Choose a strong password for <span className="font-semibold text-stone-900">{email}</span></p>
               </div>
               <form onSubmit={handleResetPassword} className="space-y-5">
@@ -215,14 +215,14 @@ const ForgotPassword = () => {
                     <input type={showPassword ? 'text' : 'password'} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="input-field pl-10" />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base disabled:opacity-70">
+                <button type="submit" disabled={loading} className="btn-primary w-full min-h-[44px] py-3.5 text-base disabled:opacity-70">
                   {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Resetting...</> : <>Reset password <ArrowRight className="w-5 h-5" /></>}
                 </button>
               </form>
             </>
           )}
         </div>
-        <p className="text-xs text-stone-400 text-center">© {new Date().getFullYear()} Growventory</p>
+        <p className="text-xs text-stone-400 text-center pb-safe">© {new Date().getFullYear()} Growventory</p>
       </div>
 
       <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative overflow-hidden">

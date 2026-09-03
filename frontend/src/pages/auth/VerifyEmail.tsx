@@ -88,11 +88,11 @@ const VerifyEmail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* Pending approval screen after verification */}
       {verifiedResult?.pending && (
         <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center p-4">
-          <div className="max-w-md w-full text-center">
+          <div className="w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-forest-100 to-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-6 ring-1 ring-forest-200">
               <Clock className="w-10 h-10 text-[#1d4d2e]" strokeWidth={2} />
             </div>
@@ -100,7 +100,7 @@ const VerifyEmail = () => {
               <Sparkles className="w-3 h-3" />
               Email verified
             </span>
-            <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Awaiting approval</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight min-w-0 break-words">Awaiting approval</h1>
             <p className="mt-3 text-stone-600 leading-relaxed">
               Thanks, <span className="font-semibold text-stone-900">{verifiedResult.username}</span>. Your email is verified. An administrator will review your account and assign you a role shortly.
             </p>
@@ -123,7 +123,7 @@ const VerifyEmail = () => {
             </div>
             <button
               onClick={() => navigate('/login')}
-              className="btn-primary w-full mt-6 py-3.5 text-base"
+              className="btn-primary w-full min-h-[44px] mt-6 py-3.5 text-base"
             >
               Go to sign in
               <ArrowRight className="w-5 h-5" />
@@ -133,7 +133,7 @@ const VerifyEmail = () => {
         </div>
       )}
       {/* Left form */}
-      <div className="flex-1 flex flex-col px-6 sm:px-12 lg:px-16 xl:px-24 py-8 relative">
+      <div className="flex-1 flex flex-col w-full min-w-0 px-4 sm:px-12 lg:px-16 xl:px-24 py-6 sm:py-8 relative">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="logo" className="w-12 h-12 object-contain" />
@@ -144,12 +144,12 @@ const VerifyEmail = () => {
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto py-12">
+        <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto min-w-0 py-8 sm:py-12">
           <div className="mb-8">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#eef6ee] text-[#1d4d2e] text-xs font-semibold rounded-full mb-4">
               <Sparkles className="w-3 h-3" /> Email verification
             </span>
-            <h1 className="text-4xl font-bold text-stone-900 tracking-tight">Check your email</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight min-w-0 break-words">Check your email</h1>
             <p className="mt-3 text-stone-500">
               We sent a 4-digit code to your email. Enter it below to verify your account.
             </p>
@@ -180,7 +180,7 @@ const VerifyEmail = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3.5 text-base shadow-lg shadow-forest-700/20 disabled:opacity-70"
+              className="btn-primary w-full min-h-[44px] py-3.5 text-base shadow-lg shadow-forest-700/20 disabled:opacity-70"
             >
               {loading ? (
                 <>
@@ -211,7 +211,7 @@ const VerifyEmail = () => {
             </p>
           </form>
         </div>
-        <p className="text-xs text-stone-400 text-center">© {new Date().getFullYear()} Growventory</p>
+        <p className="text-xs text-stone-400 text-center pb-safe">© {new Date().getFullYear()} Growventory</p>
       </div>
 
       {/* Right visual */}

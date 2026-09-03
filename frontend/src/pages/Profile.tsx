@@ -109,20 +109,20 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 min-w-0 w-full">
       <div>
         <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-stone-400">Account</p>
-        <h1 className="text-3xl font-bold tracking-tight text-stone-900 mt-1">Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 mt-1">Profile</h1>
         <p className="text-sm text-stone-500 mt-1">Manage your personal information and password. Visible to all roles.</p>
       </div>
 
       {/* Header card */}
-      <div className="card p-6 flex items-center gap-4">
-        <Avatar username={profile?.username} size={56} className="w-14 h-14 rounded-2xl border border-[#d6ead6] shadow-sm" />
-        <div className="flex-1 min-w-0">
+      <div className="card p-6 flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+        <Avatar username={profile?.username} size={56} className="w-14 h-14 rounded-2xl border border-[#d6ead6] shadow-sm shrink-0" />
+        <div className="flex-1 min-w-0 w-full">
           <p className="font-bold text-stone-900">{profile?.username}</p>
           <p className="text-sm text-stone-500 truncate">{profile?.email}</p>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-700 ring-1 ring-stone-200 capitalize">
               <Shield className="w-3 h-3" /> {profile?.role_name || user?.role_name}
             </span>
@@ -148,7 +148,7 @@ const Profile = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Username</label>
               <div className="relative">
@@ -206,8 +206,8 @@ const Profile = () => {
             )}
           </div>
 
-          <div className="flex justify-end pt-2">
-            <button onClick={handleSave} disabled={saving} className="btn-primary px-6">
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
+            <button onClick={handleSave} disabled={saving} className="btn-primary px-6 w-full sm:w-auto justify-center">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {saving ? 'Saving...' : 'Save changes'}
             </button>
@@ -259,8 +259,8 @@ const Profile = () => {
               className="input-field"
             />
           </div>
-          <div className="flex justify-end">
-            <button onClick={handlePassword} disabled={changing} className="btn-primary px-6">
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+            <button onClick={handlePassword} disabled={changing} className="btn-primary px-6 w-full sm:w-auto justify-center">
               {changing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
               {changing ? 'Updating...' : 'Update password'}
             </button>

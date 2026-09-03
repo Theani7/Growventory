@@ -9,7 +9,7 @@ const DashboardLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-moss-50/30">
+    <div className="min-h-screen bg-moss-50/30 overflow-x-clip">
       {/* Desktop Sidebar */}
       <div className={`hidden lg:block fixed inset-y-0 left-0 z-40 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
         <Sidebar collapsed={sidebarCollapsed} />
@@ -31,10 +31,10 @@ const DashboardLayout = () => {
             className="fixed inset-0 bg-ink-950/60 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="relative transform transition-transform duration-300 ease-out">
+          <div className="relative transform transition-transform duration-300 ease-out w-64 max-w-[85vw]">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 -right-12 p-3 bg-white rounded-xl shadow-lg z-10 touch-manipulation"
+              className="absolute top-4 right-4 p-3 bg-ink-50 rounded-xl shadow-lg z-10 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Close menu"
             >
               <X className="w-5 h-5" />
@@ -47,8 +47,8 @@ const DashboardLayout = () => {
       {/* Main */}
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="max-w-[1400px] mx-auto w-full">
+        <main className="flex-1 p-3 sm:p-4 lg:p-8 overflow-x-hidden min-w-0">
+          <div className="max-w-[1400px] mx-auto w-full min-w-0">
             <Outlet />
           </div>
         </main>

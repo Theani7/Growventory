@@ -144,8 +144,8 @@ const Tasks = () => {
   }, {});
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-4">
+    <div className="space-y-6 min-w-0 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Workflow</p>
           <h1 className="page-title mt-1">Tasks</h1>
@@ -185,7 +185,7 @@ const Tasks = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-ink-200 border-t-moss-600 mx-auto"></div>
           </div>
         ) : tasks.length === 0 ? (
-          <div className="card p-16 text-center">
+          <div className="card p-8 sm:p-16 text-center">
             <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <ClipboardList className="w-8 h-8 text-ink-400" />
             </div>
@@ -199,7 +199,7 @@ const Tasks = () => {
             const pMeta = priorityMeta[task.priority || ''] || priorityMeta.medium;
             const isOverdue = task.due_date && new Date(task.due_date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && task.status !== 'completed';
             return (
-              <div key={task.task_id} className="card card-hover p-5 group">
+              <div key={task.task_id} className="card card-hover p-4 sm:p-5 group">
                 <div className="flex items-start gap-4">
                   <button
                     onClick={() => handleStatusChange(task.task_id, task.status === 'completed' ? 'pending' : 'completed')}
@@ -233,14 +233,14 @@ const Tasks = () => {
                         </div>
                       </div>
                       {isManager && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => openModal(task)} className="btn-icon"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => setDeleteTarget(task)} className="btn-icon hover:!text-red-600 hover:!bg-red-50"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       )}
                     </div>
                     {(String(task.assigned_to) === String(user?.user_id) || isManager) && task.status !== 'completed' && (
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {task.status !== 'in_progress' && (
                           <button onClick={() => handleStatusChange(task.task_id, 'in_progress')} className="btn-ghost text-xs">
                             Start
@@ -262,7 +262,7 @@ const Tasks = () => {
       {/* Modal */}
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">{editingTask ? 'Edit Task' : 'New Task'}</h2>
@@ -294,7 +294,7 @@ const Tasks = () => {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label">Priority</label>
                   <select className="input-field"
@@ -327,7 +327,7 @@ const Tasks = () => {
                   </select>
                 </div>
               )}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" className="btn-primary flex-1">{editingTask ? 'Update' : 'Create'}</button>
               </div>
@@ -339,7 +339,7 @@ const Tasks = () => {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -358,7 +358,7 @@ const Tasks = () => {
                 {deleteTarget.description && <p className="text-sm text-ink-600 mt-0.5 line-clamp-2">{deleteTarget.description}</p>}
               </div>
               <p className="text-sm text-ink-600">Are you sure you want to delete this task?</p>
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
                 <button onClick={() => handleDelete(deleteTarget.task_id)} className="btn-danger">Delete Task</button>
               </div>

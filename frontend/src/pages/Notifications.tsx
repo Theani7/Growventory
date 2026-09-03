@@ -99,7 +99,7 @@ const Notifications = () => {
   const grouped = groupNotifications(filtered);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Updates</p>
@@ -145,7 +145,7 @@ const Notifications = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Bell className="w-8 h-8 text-ink-400" />
           </div>
@@ -179,7 +179,7 @@ const Notifications = () => {
                     <div
                       key={notification.notification_id}
                       onClick={() => { if (unread) markAsRead(notification.notification_id); }}
-                      className={`card-hover card-flat flex items-start gap-4 p-4 cursor-pointer transition-all ${
+                      className={`card-hover card-flat flex items-start gap-4 p-4 min-w-0 cursor-pointer transition-all ${
                         unread ? 'bg-moss-50/40 ring-moss-200' : ''
                       }`}
                     >
@@ -191,7 +191,7 @@ const Notifications = () => {
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <h3 className={`text-sm leading-snug ${
+                              <h3 className={`text-sm leading-snug break-words ${
                                 unread ? 'font-bold text-ink-900' : 'font-semibold text-ink-700'
                               }`}>
                                 {notification.title}
@@ -200,8 +200,8 @@ const Notifications = () => {
                                 <span className="w-1.5 h-1.5 rounded-full bg-moss-500 flex-shrink-0"></span>
                               )}
                             </div>
-                            <p className="text-sm text-ink-600 mt-1 leading-relaxed">{notification.message}</p>
-                            <div className="flex items-center gap-3 mt-2">
+                            <p className="text-sm text-ink-600 mt-1 leading-relaxed break-words">{notification.message}</p>
+                            <div className="flex flex-wrap items-center gap-3 mt-2">
                               <div className="flex items-center gap-1.5 text-xs text-ink-400">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span>

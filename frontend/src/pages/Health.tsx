@@ -79,7 +79,7 @@ const Health = () => {
   }, {});
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Wellness</p>
@@ -133,7 +133,7 @@ const Health = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : logs.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <HeartPulse className="w-8 h-8 text-ink-400" />
           </div>
@@ -197,7 +197,7 @@ const Health = () => {
       {/* Modal */}
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">Record Health Check</h2>
@@ -244,7 +244,7 @@ const Health = () => {
                 <label className="label">Notes</label>
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="input-field" rows={2} placeholder="Observations..." />
               </div>
-              <div className="flex gap-3 justify-end pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
                 <button type="button" onClick={() => { setShowModal(false); setFormData({ plant_id: '', health_status: 'healthy', growth_stage: '', notes: '' }); }} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
                   {submitting ? 'Recording...' : 'Record'}

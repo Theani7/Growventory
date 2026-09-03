@@ -218,14 +218,14 @@ const Users = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-4">
+    <div className="space-y-6 min-w-0 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Access Control</p>
           <h1 className="page-title mt-1">Users</h1>
           <p className="page-subtitle">Manage users, roles, and pending registrations</p>
         </div>
-        <button onClick={() => openModal()} className="btn-primary">
+        <button onClick={() => openModal()} className="btn-primary w-full sm:w-auto justify-center">
           <Plus className="w-4 h-4" /> Add User
         </button>
       </div>
@@ -236,7 +236,7 @@ const Users = () => {
           onClick={() => setTab('pending')}
           className="w-full text-left card p-4 ring-1 ring-amber-200 bg-amber-50/50 hover:bg-amber-50 transition-colors group"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-amber-100 ring-1 ring-amber-200 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-amber-700" strokeWidth={2.2} />
@@ -248,7 +248,7 @@ const Users = () => {
                 <p className="text-sm text-ink-600">New users are waiting for role assignment.</p>
               </div>
             </div>
-            <span className="btn-secondary !ring-amber-300 !text-amber-700 hover:!bg-amber-100 group-hover:translate-x-0.5 transition-transform">
+            <span className="btn-secondary shrink-0 w-full sm:w-auto text-center justify-center !ring-amber-300 !text-amber-700 hover:!bg-amber-100 group-hover:translate-x-0.5 transition-transform">
               Review now →
             </span>
           </div>
@@ -302,7 +302,7 @@ const Users = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-ink-200 border-t-moss-600 mx-auto"></div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-16 text-center">
+          <div className="p-8 sm:p-16 text-center">
             <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <UsersIcon className="w-8 h-8 text-ink-400" />
             </div>
@@ -431,7 +431,7 @@ const Users = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">{editingUser ? 'Edit User' : 'Add User'}</h2>
@@ -510,7 +510,7 @@ const Users = () => {
                   Active account
                 </label>
               )}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" className="btn-primary flex-1">{editingUser ? 'Update' : 'Create'}</button>
               </div>
@@ -522,7 +522,7 @@ const Users = () => {
       {/* Approve Modal */}
       {approveTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-moss-50 ring-1 ring-moss-100 rounded-xl flex items-center justify-center">
@@ -574,7 +574,7 @@ const Users = () => {
                   <p className="text-xs text-ink-500 mt-1.5">The user will be notified once approved.</p>
                 )}
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button type="button" onClick={() => setApproveTarget(null)} className="btn-secondary">Cancel</button>
                 <button
                   onClick={handleApprove}
@@ -592,7 +592,7 @@ const Users = () => {
       {/* Reject Modal */}
       {rejectTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -620,7 +620,7 @@ const Users = () => {
                   placeholder="Why is this registration being rejected? (logged for audit)"
                 />
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary">Cancel</button>
                 <button
                   onClick={handleReject}
@@ -638,7 +638,7 @@ const Users = () => {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -663,7 +663,7 @@ const Users = () => {
                   Deleting this user will permanently remove all their data and activity. This action cannot be undone.
                 </p>
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
                 <button
                   onClick={() => handleDelete(deleteTarget.user_id)}
@@ -680,7 +680,7 @@ const Users = () => {
       {/* Password Reset Modal */}
       {resetPasswordTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-moss-50 ring-1 ring-moss-100 rounded-xl flex items-center justify-center">
@@ -712,7 +712,7 @@ const Users = () => {
                 <p className="mt-1.5 text-xs text-stone-500">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</p>
                 <p className="text-xs text-ink-500 mt-1">The user will need to use this password to log in.</p>
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button type="button" onClick={() => { setResetPasswordTarget(null); setNewPassword(''); }} className="btn-secondary">Cancel</button>
                 <button
                   onClick={() => handleResetPassword(resetPasswordTarget.user_id)}

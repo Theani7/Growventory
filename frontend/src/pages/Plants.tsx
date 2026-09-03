@@ -264,7 +264,7 @@ const Plants = () => {
   const hasActiveFilters = search || filterCategory || filterHealth;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
@@ -272,7 +272,7 @@ const Plants = () => {
           <h1 className="page-title mt-1">Plants</h1>
           <p className="page-subtitle">Manage your plant catalogue and track health</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:items-center">
           <div className="hidden sm:flex bg-white ring-1 ring-ink-200 rounded-xl p-1 shadow-sm">
             <Tooltip text="Grid view" position="bottom">
               <button
@@ -297,15 +297,15 @@ const Plants = () => {
             </button>
           </Tooltip>
           {isAdmin && (
-            <button onClick={() => setShowImportModal(true)} className="btn-secondary">
+            <button onClick={() => setShowImportModal(true)} className="btn-secondary w-full sm:w-auto">
               <Upload className="w-4 h-4" /> Import
             </button>
           )}
-          <button onClick={() => downloadExport()} className="btn-secondary">
+          <button onClick={() => downloadExport()} className="btn-secondary w-full sm:w-auto">
             <Download className="w-4 h-4" /> Export
           </button>
           {canEdit && (
-            <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary">
+            <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary w-full sm:w-auto">
               <Plus className="w-4 h-4" /> Add Plant
             </button>
           )}
@@ -392,12 +392,12 @@ const Plants = () => {
             <option value="critical">Critical</option>
           </select>
           
-          <div className="flex gap-2">
-            <button onClick={handleSearch} className="btn-primary">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button onClick={handleSearch} className="btn-primary w-full sm:w-auto">
               <Filter className="w-4 h-4" /> Apply
             </button>
             {hasActiveFilters && (
-              <button onClick={clearFilters} className="btn-secondary">
+              <button onClick={clearFilters} className="btn-secondary w-full sm:w-auto">
                 <X className="w-4 h-4" /> Clear
               </button>
             )}
@@ -439,7 +439,7 @@ const Plants = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-moss-600"></div>
         </div>
       ) : plants.length === 0 ? (
-        <div className="card p-16 text-center">
+        <div className="card p-8 sm:p-16 text-center">
           <div className="w-16 h-16 bg-ink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Sprout className="w-8 h-8 text-ink-400" />
           </div>
@@ -484,14 +484,14 @@ const Plants = () => {
                 {plant.scientific_name && (
                   <p className="text-xs text-ink-500 italic truncate">{plant.scientific_name}</p>
                 )}
-                <div className="flex items-center gap-3 mt-2 text-xs text-ink-500">
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-ink-500 min-w-0">
                   {plant.category_name && (
-                    <span className="inline-flex items-center gap-1 truncate">
+                    <span className="inline-flex items-center gap-1 truncate min-w-0">
                       <Tag className="w-3 h-3" />{plant.category_name}
                     </span>
                   )}
                   {plant.location && (
-                    <span className="inline-flex items-center gap-1 truncate">
+                    <span className="inline-flex items-center gap-1 truncate min-w-0">
                       <MapPin className="w-3 h-3" />{plant.location}
                     </span>
                   )}
@@ -503,7 +503,7 @@ const Plants = () => {
                       {plant.current_stock}
                     </p>
                   </div>
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     {canEdit && (
                       <button onClick={() => openEditModal(plant)} className="btn-icon" title="Edit">
                         <Edit2 className="w-4 h-4" />
@@ -526,7 +526,7 @@ const Plants = () => {
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x [-webkit-overflow-scrolling:touch]">
             <div className="min-w-full inline-block align-middle">
               <div className="overflow-hidden">
                 <table className="table-modern min-w-full">
@@ -595,7 +595,7 @@ const Plants = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-2xl max-h-[90vh] flex flex-col">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-2xl max-h-[90dvh] overflow-y-auto flex flex-col">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">{editingPlant ? 'Edit Plant' : 'New Plant'}</h2>
@@ -662,7 +662,7 @@ const Plants = () => {
                         onClick={() => {
                           setFormData({ ...formData, image: null, imagePreview: null });
                         }}
-                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shadow-lg"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -704,7 +704,7 @@ const Plants = () => {
                 </div>
               </div>
             </form>
-            <div className="flex flex-col sm:flex-row gap-3 justify-end p-4 sm:p-5 border-t border-ink-100 bg-ink-50/40">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end p-4 sm:p-5 border-t border-ink-100 bg-ink-50/40">
               <button type="button" onClick={() => setShowModal(false)} className="btn-secondary min-h-[44px] flex-1 sm:flex-none">Cancel</button>
               <button onClick={handleSubmit} className="btn-primary min-h-[44px] flex-1 sm:flex-none" disabled={submitting}>
                 {submitting ? 'Saving...' : editingPlant ? 'Update Plant' : 'Add Plant'}
@@ -717,7 +717,7 @@ const Plants = () => {
       {/* Import Modal */}
       {showImportModal && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-ink-100">
               <div>
                 <h2 className="text-lg font-extrabold text-ink-900 font-display">Import Plants</h2>
@@ -731,7 +731,7 @@ const Plants = () => {
               <div className="space-y-4">
                 <div>
                   <label className="label">CSV File *</label>
-                  <div className="ring-2 ring-dashed ring-ink-200 rounded-2xl p-8 text-center hover:ring-ink-400 transition">
+                  <div className="ring-2 ring-dashed ring-ink-200 rounded-2xl p-5 sm:p-8 text-center hover:ring-ink-400 transition">
                     <FileSpreadsheet className="w-12 h-12 text-ink-400 mx-auto mb-3" />
                     <p className="text-sm text-ink-600 mb-3">
                       {importFile ? <span className="font-semibold text-ink-900">{importFile.name}</span> : 'Drag & drop or click to select'}
@@ -758,11 +758,11 @@ const Plants = () => {
                   </ul>
                 </div>
               </div>
-              <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-ink-100">
-                <button type="button" onClick={() => { setShowImportModal(false); setImportFile(null); }} className="btn-secondary">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end mt-6 pt-5 border-t border-ink-100">
+                <button type="button" onClick={() => { setShowImportModal(false); setImportFile(null); }} className="btn-secondary w-full sm:w-auto">
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={importing || !importFile}>
+                <button type="submit" className="btn-primary w-full sm:w-auto" disabled={importing || !importFile}>
                   {importing ? 'Importing...' : 'Import Plants'}
                 </button>
               </div>
@@ -774,7 +774,7 @@ const Plants = () => {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="modal-backdrop flex items-center justify-center p-4">
-          <div className="modal-panel w-full max-w-md">
+          <div className="modal-panel w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-50 ring-1 ring-red-100 rounded-xl flex items-center justify-center">
@@ -799,9 +799,9 @@ const Plants = () => {
                   Deleting this plant will permanently remove all associated data including stock movements and health logs.
                 </p>
               </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>
-                <button onClick={() => handleDelete(deleteTarget)} className="btn-danger">Delete Plant</button>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+                <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary w-full sm:w-auto">Cancel</button>
+                <button onClick={() => handleDelete(deleteTarget)} className="btn-danger w-full sm:w-auto">Delete Plant</button>
               </div>
             </div>
           </div>

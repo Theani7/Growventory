@@ -117,7 +117,7 @@ const Register = () => {
 
       {/* Right Form */}
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="h-[72px] flex items-center justify-between px-6 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
+        <div className="h-[72px] flex items-center justify-between px-4 sm:px-10 lg:px-12 border-b border-stone-100 bg-white/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Growventory" className="w-9 h-9 object-contain" />
             <span className="font-bold text-[16px] tracking-tight text-stone-900">Growventory</span>
@@ -125,10 +125,10 @@ const Register = () => {
           <Link to="/" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-stone-900">← Back home</Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 lg:px-12 py-8">
-          <div className="w-full max-w-[460px]">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-10 lg:px-12 py-6 sm:py-8">
+          <div className="w-full max-w-[460px] min-w-0 mx-auto">
             <div className="mb-6">
-              <h1 className="text-[32px] font-bold tracking-tight text-stone-900 leading-none">Create your account</h1>
+              <h1 className="text-[26px] sm:text-[32px] font-bold tracking-tight text-stone-900 leading-none min-w-0 break-words">Create your account</h1>
               <p className="mt-2 text-sm text-stone-600">
                 Already have an account? <Link to="/login" className="font-semibold text-[#1d4d2e] hover:underline">Sign in</Link>
               </p>
@@ -240,14 +240,14 @@ const Register = () => {
                 By creating an account, you agree to our <a href="#" className="font-medium text-[#1d4d2e] hover:underline">Terms</a> and <a href="#" className="font-medium text-[#1d4d2e] hover:underline">Privacy Policy</a>.
               </p>
 
-              <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60">
+              <button type="submit" disabled={loading} className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60">
                 {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating account...</> : <>Create account <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
           </div>
         </div>
 
-        <p className="text-center text-xs text-stone-400 pb-6 hidden lg:block">© {new Date().getFullYear()} Growventory</p>
+        <p className="text-center text-xs text-stone-400 pb-6 pb-safe hidden lg:block">© {new Date().getFullYear()} Growventory</p>
       </div>
     </div>
   );

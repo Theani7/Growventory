@@ -10,8 +10,42 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 html, body, #root {
   height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+img {
+  max-width: 100%;
+}
+
+input, select, textarea {
+  max-width: 100%;
+}
+
+/* Safe-area utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -35,15 +69,16 @@ body {
     font-size: 16px !important;
   }
   
-  button, 
-  a, 
-  .btn-primary, 
-  .btn-secondary, 
-  .btn-ghost,
-  .nav-link,
-  .nav-link-active {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-dark {
     min-height: 44px;
+  }
+
+  .btn-icon {
     min-width: 44px;
+    min-height: 44px;
   }
   
   .table-modern th,
@@ -56,6 +91,35 @@ body {
     margin: 16px !important;
     max-height: calc(100vh - 32px) !important;
   }
+
+  .modal-panel {
+    width: calc(100vw - 2rem);
+    max-height: 90dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  div[style*="top-right"],
+  div[style*="top-center"] {
+    left: 1rem !important;
+    right: 1rem !important;
+  }
+
+  .stat-card {
+    @apply p-4;
+  }
+
+  .card {
+    border-radius: 1rem;
+  }
+}
+
+/* Toast overflow guard */
+[data-sonner-toaster],
+.react-hot-toast,
+div[class*="go"] {
+  max-width: calc(100vw - 2rem) !important;
 }
 
 /* Prevent text selection on interactive elements */
@@ -248,7 +312,7 @@ p, h1, h2, h3, h4, h5, h6, span, div:not([class*="btn"]):not([class*="input"]) {
   }
 
   .page-title {
-    @apply text-3xl font-extrabold text-ink-900 tracking-tight;
+    @apply text-2xl sm:text-3xl font-extrabold text-ink-900 tracking-tight;
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     letter-spacing: -0.02em;
   }
@@ -285,6 +349,12 @@ p, h1, h2, h3, h4, h5, h6, span, div:not([class*="btn"]):not([class*="input"]) {
   /* Responsive table container */
   .table-responsive {
     @apply -mx-4 sm:mx-0 overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .table-responsive::-webkit-scrollbar {
+    height: 6px;
   }
 
   .table-responsive table {
@@ -297,7 +367,7 @@ p, h1, h2, h3, h4, h5, h6, span, div:not([class*="btn"]):not([class*="input"]) {
   }
 
   .stat-value {
-    @apply text-4xl font-extrabold text-ink-900 tracking-tight tabular-nums;
+    @apply text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight tabular-nums;
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     letter-spacing: -0.03em;
   }
