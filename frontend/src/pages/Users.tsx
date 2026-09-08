@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { Users as UsersIcon, Plus, Edit, Trash2, Power, Key, X, Search, Shield, CheckCircle2, XCircle, Clock, UserPlus } from 'lucide-react';
 import Avatar from '../components/Avatar';
@@ -38,6 +38,8 @@ const Users = () => {
   });
   const [phoneError, setPhoneError] = useState('');
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const validatePhone = (v: string) => {
     if (!v.trim()) return '';
     const digits = v.replace(/\D/g, '');
@@ -49,23 +51,52 @@ const Users = () => {
   const isStrongPassword = (p: string) =>
     p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        api.get('/users'),
-        api.get('/users/roles'),
+        api.get('/users', { signal: controller.signal }),
+        api.get('/users/roles', { signal: controller.signal }),
       ]);
+      if (controller.signal.aborted) return;
       setUsers(usersRes.data.data || []);
       setRoles(rolesRes.data.data || []);
-    } catch (error) {
-      toast.error('Failed to load users');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Users] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to load users';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to load users. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Users] fetchData failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    return () => abortRef.current?.abort();
+  }, [fetchData]);
 
   const openModal = (user: User | null = null) => {
     setPhoneError('');
@@ -107,6 +138,7 @@ const Users = () => {
       setShowModal(false);
       fetchData();
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Failed to save');
     }
   };
@@ -122,6 +154,7 @@ const Users = () => {
       setApproveRoleId('');
       fetchData();
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Approval failed');
     } finally {
       setActioning(null);
@@ -138,6 +171,7 @@ const Users = () => {
       setRejectReason('');
       fetchData();
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Rejection failed');
     } finally {
       setActioning(null);
@@ -154,6 +188,7 @@ const Users = () => {
       toast.success('Status toggled');
       fetchData();
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Failed');
     }
   };
@@ -170,6 +205,7 @@ const Users = () => {
       setDeleteTarget(null);
       fetchData();
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Failed');
     }
   };
@@ -185,6 +221,7 @@ const Users = () => {
       setResetPasswordTarget(null);
       setNewPassword('');
     } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.code === 'ECONNABORTED') return;
       toast.error(error.response?.data?.message || 'Failed to reset password');
     }
   };

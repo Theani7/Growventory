@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
@@ -21,33 +21,78 @@ const Notifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const initialLoadRef = useRef(true);
+  const notifAbortRef = useRef<AbortController | null>(null);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => { fetchNotifications(); }, []);
+  const fetchNotifications = useCallback(async () => {
+    if (notifAbortRef.current) {
+      notifAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    notifAbortRef.current = controller;
 
-  useEffect(() => {
-    const interval = setInterval(fetchNotifications, 30000);
-    const handleFocus = () => fetchNotifications();
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  const fetchNotifications = async () => {
     if (initialLoadRef.current) setLoading(true);
     try {
-      const { data } = await api.get('/notifications');
+      const { data } = await api.get('/notifications', { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setNotifications(data.data?.notifications || []);
       setUnreadCount(data.data?.unread_count || 0);
-    } catch {
-      toast.error('Failed to fetch notifications');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Notifications] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch notifications';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch notifications. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Notifications] fetchNotifications failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
       initialLoadRef.current = false;
+      if (notifAbortRef.current === controller) notifAbortRef.current = null;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    return () => notifAbortRef.current?.abort();
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchNotifications();
+    }, 30000);
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') fetchNotifications();
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchNotifications]);
 
   const markAsRead = async (id: number) => {
     try {
@@ -55,7 +100,8 @@ const Notifications = () => {
       setNotifications((list) => list.map((n) => (n.notification_id === id ? { ...n, is_read: 1 } : n)));
       setUnreadCount((c) => Math.max(0, c - 1));
       window.dispatchEvent(new Event('notifications-updated'));
-    } catch {
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || error?.name === 'AbortError') return;
       toast.error('Failed to mark as read');
     }
   };
@@ -67,7 +113,8 @@ const Notifications = () => {
       setUnreadCount(0);
       window.dispatchEvent(new Event('notifications-updated'));
       toast.success('All notifications marked as read');
-    } catch {
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || error?.name === 'AbortError') return;
       toast.error('Failed to mark all as read');
     }
   };

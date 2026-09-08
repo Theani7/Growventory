@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { FormEvent } from 'react';
 import api from '../services/api';
@@ -62,6 +62,8 @@ const Plants = () => {
   });
   const plantFiltersRef = useRef({ search: '', category: '', health: '' });
   plantFiltersRef.current = { search, category: filterCategory, health: filterHealth };
+  const plantAbortRef = useRef<AbortController | null>(null);
+  const catAbortRef = useRef<AbortController | null>(null);
 
   const buildPlantParams = () => {
     const { search: s, category, health } = plantFiltersRef.current;
@@ -80,6 +82,79 @@ const Plants = () => {
     };
   }, [formData.imagePreview]);
 
+  const fetchPlants = useCallback(async (params: Record<string, string> = {}) => {
+    if (plantAbortRef.current) {
+      plantAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    plantAbortRef.current = controller;
+    setLoading(true);
+    try {
+      const query = new URLSearchParams(params).toString();
+      const { data } = await api.get(`/plants${query ? `?${query}` : ''}`, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setPlants(data.data || []);
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Plants] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch plants';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch plants. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Plants] fetchPlants failed', status, msg);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+      if (plantAbortRef.current === controller) plantAbortRef.current = null;
+    }
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    if (catAbortRef.current) {
+      catAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    catAbortRef.current = controller;
+    try {
+      const { data } = await api.get('/categories', { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setCategories(data.data || []);
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Plants] categories timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch categories';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch categories. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Plants] fetchCategories failed', status, msg);
+    } finally {
+      if (catAbortRef.current === controller) catAbortRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const urlSearch = searchParams.get('search');
     if (urlSearch) {
@@ -88,35 +163,35 @@ const Plants = () => {
       fetchPlants();
     }
     fetchCategories();
-  }, [searchParams]);
+    return () => {
+      plantAbortRef.current?.abort();
+      catAbortRef.current?.abort();
+    };
+  }, [searchParams, fetchPlants, fetchCategories]);
 
   useEffect(() => {
-    const handleFocus = () => { fetchPlants(buildPlantParams()); fetchCategories(); };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
-
-  const fetchPlants = async (params: Record<string, string> = {}) => {
-    setLoading(true);
-    try {
-      const query = new URLSearchParams(params).toString();
-      const { data } = await api.get(`/plants${query ? `?${query}` : ''}`);
-      setPlants(data.data || []);
-    } catch (error) {
-      toast.error('Failed to fetch plants');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const { data } = await api.get('/categories');
-      setCategories(data.data || []);
-    } catch (error) {
-      toast.error('Failed to fetch categories');
-    }
-  };
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          fetchPlants(buildPlantParams());
+          fetchCategories();
+        }
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchPlants, fetchCategories]);
 
   const handleSearch = () => {
     const params: Record<string, string> = {};

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -17,25 +17,72 @@ const Categories = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ category_name: '', description: '' });
 
-  useEffect(() => { fetchCategories(); }, []);
+  const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const handleFocus = () => fetchCategories();
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  const fetchCategories = useCallback(async () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-  const fetchCategories = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/categories');
+      const { data } = await api.get('/categories', { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setCategories(data.data || []);
-    } catch {
-      toast.error('Failed to fetch categories');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || controller.signal.aborted || error?.name === 'AbortError') {
+        return;
+      }
+      if (error?.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please retry.');
+        console.warn('[Categories] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch categories';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch categories' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Categories] fetchCategories failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    return () => abortRef.current?.abort();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') fetchCategories();
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchCategories]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

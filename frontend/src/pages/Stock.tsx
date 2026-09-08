@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -29,15 +29,13 @@ const Stock = () => {
   const filtersRef = useRef({ plant: '', type: '', status: '' });
   filtersRef.current = { plant: filterPlant, type: filterType, status: filterStatus };
 
-  useEffect(() => { fetchMovements(); fetchPlants(); }, []);
+  const movAbortRef = useRef<AbortController | null>(null);
+  const plantsAbortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const handleFocus = () => { fetchMovements(); fetchPlants(); };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
-
-  const fetchMovements = async (overrides: { plant?: string; type?: string; status?: string } = {}) => {
+  const fetchMovements = useCallback(async (overrides: { plant?: string; type?: string; status?: string } = {}) => {
+    if (movAbortRef.current) movAbortRef.current.abort();
+    const controller = new AbortController();
+    movAbortRef.current = controller;
     const f = { ...filtersRef.current, ...overrides };
     setLoading(true);
     try {
@@ -46,21 +44,85 @@ const Stock = () => {
       if (f.type) params.set('movement_type', f.type);
       if (f.status) params.set('status', f.status);
       const url = '/stock/movements' + (params.toString() ? `?${params}` : '');
-      const { data } = await api.get(url);
+      const { data } = await api.get(url, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setMovements(data.data || []);
-    } catch {
-      toast.error('Failed to fetch movements');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+          console.warn('[Stock] timeout', error.message);
+        }
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch movements';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch movements. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Stock] fetchMovements failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (movAbortRef.current === controller) movAbortRef.current = null;
     }
-  };
+  }, []);
 
-  const fetchPlants = async () => {
+  const fetchPlants = useCallback(async () => {
+    if (plantsAbortRef.current) plantsAbortRef.current.abort();
+    const controller = new AbortController();
+    plantsAbortRef.current = controller;
     try {
-      const { data } = await api.get('/plants');
+      const { data } = await api.get('/plants', { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setPlants(data.data || []);
-    } catch {}
-  };
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        return;
+      }
+      console.error('[Stock] fetchPlants failed', error?.response?.status, error?.message);
+    } finally {
+      if (plantsAbortRef.current === controller) plantsAbortRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMovements();
+    fetchPlants();
+    return () => {
+      movAbortRef.current?.abort();
+      plantsAbortRef.current?.abort();
+    };
+  }, [fetchMovements, fetchPlants]);
+
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          fetchMovements();
+          fetchPlants();
+        }
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchMovements, fetchPlants]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

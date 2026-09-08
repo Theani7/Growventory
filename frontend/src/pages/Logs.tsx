@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { 
@@ -26,33 +26,81 @@ const Logs = () => {
   const [limit, setLimit] = useState(50);
   const hasMore = logs.length === limit;
 
-  const fetchLogs = async (opts?: { page?: number; limit?: number }) => {
+  const abortRef = useRef<AbortController | null>(null);
+
+  const fetchLogs = useCallback(async (opts?: { page?: number; limit?: number }) => {
+    // Cancel previous in-flight request to avoid race + ERR_CANCELED false errors
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
     const p = opts?.page ?? page;
     const l = opts?.limit ?? limit;
     const offset = p * l;
     const safeLimit = Math.min(Math.max(l, 1), 100);
     setLoading(true);
     try {
-      const { data } = await api.get(`/dashboard/recent-activities?limit=${safeLimit}&offset=${offset}`);
+      const { data } = await api.get(`/dashboard/recent-activities?limit=${safeLimit}&offset=${offset}`, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setLogs(data.data || []);
-    } catch {
-      toast.error('Failed to fetch activity logs');
+    } catch (error: any) {
+      // Silently ignore cancellations (tab switch / rapid page change)
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Logs] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch activity logs';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch activity logs. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Logs] fetchLogs failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  };
-
-  useEffect(() => { fetchLogs({ page, limit }); }, [page, limit]);
+  }, [page, limit]);
 
   useEffect(() => {
-    const handleFocus = () => fetchLogs({ page, limit });
-    window.addEventListener('focus', handleFocus);
-    const interval = setInterval(() => fetchLogs({ page, limit }), 30000);
+    fetchLogs({ page, limit });
+    return () => abortRef.current?.abort();
+  }, [fetchLogs, page, limit]);
+
+  // Refetch on tab visible — debounced + respects visibility, avoids storm on window focus
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') fetchLogs({ page, limit });
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchLogs({ page, limit });
+    }, 30000);
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
       clearInterval(interval);
     };
-  }, [page, limit]);
+  }, [fetchLogs, page, limit]);
 
   const tables = Array.from(new Set(logs.map(l => l.table_name).filter(Boolean))).sort();
   const actions = Array.from(new Set(logs.map(l => l.action_type).filter(Boolean))).sort();

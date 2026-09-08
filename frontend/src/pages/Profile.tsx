@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { User, Mail, Phone, Shield, Lock, Save, Loader2 } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import api from '../services/api';
@@ -26,6 +26,8 @@ const Profile = () => {
   const [phoneError, setPhoneError] = useState('');
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const isStrongPassword = (p: string) =>
     p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
 
@@ -37,20 +39,50 @@ const Profile = () => {
     return '';
   };
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setLoading(true);
     try {
-      const { data } = await api.get('/users/me');
+      const { data } = await api.get('/users/me', { signal: controller.signal });
+      if (controller.signal.aborted) return;
       const p = data.data as ProfileData;
       setProfile(p);
       setForm({ full_name: p.full_name || '', phone: p.phone || '' });
-    } catch {
-      toast.error('Failed to load profile');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Profile] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to load profile';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to load profile. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Profile] fetchProfile failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchProfile(); }, []);
+  useEffect(() => {
+    fetchProfile();
+    return () => abortRef.current?.abort();
+  }, [fetchProfile]);
 
   const handleSave = async () => {
     const pe = validatePhone(form.phone);
@@ -69,6 +101,7 @@ const Profile = () => {
       setProfile(data.data);
       toast.success('Profile updated');
     } catch (e: any) {
+      if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED' || e?.code === 'ECONNABORTED' || e?.name === 'AbortError') return;
       toast.error(e.response?.data?.message || 'Failed to update');
     } finally {
       setSaving(false);
@@ -94,6 +127,7 @@ const Profile = () => {
       toast.success('Password changed');
       setPwd({ current_password: '', new_password: '', confirm: '' });
     } catch (e: any) {
+      if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED' || e?.code === 'ECONNABORTED' || e?.name === 'AbortError') return;
       toast.error(e.response?.data?.message || 'Failed to change password');
     } finally {
       setChanging(false);

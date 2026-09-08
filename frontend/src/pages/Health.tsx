@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FormEvent } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -18,15 +18,16 @@ const Health = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ plant_id: '', health_status: 'healthy', growth_stage: '', notes: '' });
 
-  useEffect(() => { fetchLogs(); fetchPlants(); }, []);
+  const logsAbortRef = useRef<AbortController | null>(null);
+  const plantsAbortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const handleFocus = () => { fetchLogs(); fetchPlants(); };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  const fetchLogs = useCallback(async () => {
+    if (logsAbortRef.current) {
+      logsAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    logsAbortRef.current = controller;
 
-  const fetchLogs = async () => {
     setLoading(true);
     try {
       let url = '/health/logs';
@@ -34,21 +35,86 @@ const Health = () => {
       if (filterPlant) params.push(`plant_id=${filterPlant}`);
       if (filterStatus) params.push(`health_status=${filterStatus}`);
       if (params.length) url += `?${params.join('&')}`;
-      const { data } = await api.get(url);
+      const { data } = await api.get(url, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setLogs(data.data || []);
-    } catch {
-      toast.error('Failed to fetch health logs');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Health] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to fetch health logs';
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to fetch health logs. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Health] fetchLogs failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (logsAbortRef.current === controller) logsAbortRef.current = null;
     }
-  };
+  }, [filterPlant, filterStatus]);
 
-  const fetchPlants = async () => {
+  const fetchPlants = useCallback(async () => {
+    if (plantsAbortRef.current) {
+      plantsAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    plantsAbortRef.current = controller;
     try {
-      const { data } = await api.get('/plants');
+      const { data } = await api.get('/plants', { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setPlants(data.data || []);
-    } catch {}
-  };
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        return;
+      }
+    } finally {
+      if (plantsAbortRef.current === controller) plantsAbortRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+    fetchPlants();
+    return () => {
+      logsAbortRef.current?.abort();
+      plantsAbortRef.current?.abort();
+    };
+  }, [fetchLogs, fetchPlants]);
+
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          fetchLogs();
+          fetchPlants();
+        }
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchLogs, fetchPlants]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
