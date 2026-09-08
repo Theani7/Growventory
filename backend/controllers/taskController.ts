@@ -7,6 +7,11 @@ import { createNotification } from './notificationController';
 const getAllTasks: RequestHandler = async (req, res) => {
   try {
     const { status } = req.query;
+    // Validate status enum to avoid DB error surfacing as 500
+    const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (status && !validStatuses.includes(String(status))) {
+      return res.status(400).json({ success: false, message: `Invalid status filter. Must be one of: ${validStatuses.join(', ')}.` });
+    }
     let query = `
       SELECT t.*, 
              u1.username as assigned_to_name, u1.full_name as assigned_to_fullname,
@@ -18,8 +23,8 @@ const getAllTasks: RequestHandler = async (req, res) => {
     `;
     const params: any[] = [];
 
-    // Staff sees only their tasks
-    if (req.user!.role_name === 'staff') {
+    // Staff sees only their tasks (case-insensitive)
+    if (req.user!.role_name?.toLowerCase() === 'staff') {
       query += ' AND t.assigned_to = ?';
       params.push(req.user!.user_id);
     }
@@ -34,6 +39,7 @@ const getAllTasks: RequestHandler = async (req, res) => {
     const [tasks] = await pool.execute<RowDataPacket[]>(query, params);
     res.json({ success: true, message: 'Tasks fetched.', data: tasks });
   } catch (error: any) {
+    console.error('[tasks] getAllTasks error:', error.message);
     res.status(500).json({ success: false, message: 'Failed to fetch tasks.', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
@@ -104,7 +110,7 @@ const updateTaskStatus: RequestHandler = async (req, res) => {
     }
 
     // General access check: owner, assigner, admin, or supervisor can update tasks
-    const isManager = ['admin', 'supervisor'].includes(req.user!.role_name);
+    const isManager = ['admin', 'supervisor'].includes(req.user!.role_name?.toLowerCase());
     if (!isOwner && !isAssigner && !isAdmin && !isManager) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }

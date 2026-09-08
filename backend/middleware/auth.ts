@@ -7,19 +7,28 @@ import type { AuthUser } from '../types/authUser';
 
 // Middleware: Verify JWT token
 const authenticate: RequestHandler = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Access denied. No token provided.'
+    });
+  }
+
+  const token = authHeader.split(' ')[1];
+  let decoded: JwtPayload & { userId: number };
   try {
-    const authHeader = req.headers.authorization;
+    decoded = verifyToken(token) as JwtPayload & { userId: number };
+  } catch (error: any) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid or expired token.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token) as JwtPayload & { userId: number };
-
+  try {
     // Get user with role info
     const [users] = await pool.execute<RowDataPacket[]>(
       `SELECT u.user_id, u.username, u.email, u.role_id, r.role_name 
@@ -39,9 +48,10 @@ const authenticate: RequestHandler = async (req, res, next) => {
     req.user = users[0] as AuthUser;
     next();
   } catch (error: any) {
-    return res.status(401).json({
+    console.error('[auth] DB error during authenticate:', error.message);
+    return res.status(500).json({
       success: false,
-      message: 'Invalid or expired token.',
+      message: 'Database error during authentication. Please retry.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

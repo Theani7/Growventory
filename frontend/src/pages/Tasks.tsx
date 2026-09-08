@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { ClipboardList, Plus, Edit, Trash2, X, Calendar, Flag, CheckCircle2, Clock, Circle, AlertCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -32,35 +32,89 @@ const Tasks = () => {
     title: '', description: '', assigned_to: '', priority: 'medium', due_date: '', status: 'pending',
   });
 
-  const fetchTasks = async () => {
+  const abortRef = useRef<AbortController | null>(null);
+  const lastFetchAt = useRef<number>(0);
+
+  const fetchTasks = useCallback(async () => {
+    // Cancel previous in-flight request to avoid race + ERR_CANCELED false errors
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+    lastFetchAt.current = Date.now();
+
     setLoading(true);
     try {
       const url = filterStatus ? `/tasks?status=${filterStatus}` : '/tasks';
-      const { data } = await api.get(url);
+      const { data } = await api.get(url, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setTasks(data.data || []);
-    } catch (error) {
-      toast.error('Failed to load tasks');
+    } catch (error: any) {
+      // Silently ignore cancellations (tab switch / rapid filter change)
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED' || controller.signal.aborted || error?.name === 'AbortError') {
+        // Timeout (ECONNABORTED) — show once, not spammed by focus storm (debounced already)
+        if (error?.code === 'ECONNABORTED') {
+          toast.error('Request timed out. Please retry.');
+        }
+        if (error?.code === 'ECONNABORTED') console.warn('[Tasks] timeout', error.message);
+        return;
+      }
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Failed to load tasks';
+      // Network error (no response — backend down)
+      if (!error?.response) {
+        toast.error('Network error. Please check your connection.');
+      } else if (status === 429) {
+        toast.error('Too many requests. Please wait and retry.');
+      } else if (status >= 500) {
+        toast.error(msg.includes('Failed to fetch') ? 'Failed to load tasks. Retrying...' : msg);
+      } else {
+        toast.error(msg);
+      }
+      console.error('[Tasks] fetchTasks failed', status, msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  };
+  }, [filterStatus]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!isManager) return;
     try {
       const { data } = await api.get('/users');
       setUsers((data.data || []).filter((u: User) => u.is_active));
     } catch (error) { /* admin only */ }
-  };
-
-  useEffect(() => { fetchTasks(); }, [filterStatus]);
-  useEffect(() => { fetchUsers(); }, []);
+  }, [isManager]);
 
   useEffect(() => {
-    const handleFocus = () => fetchTasks();
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [filterStatus]);
+    fetchTasks();
+    return () => abortRef.current?.abort();
+  }, [fetchTasks]);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  // Refetch on tab visible — debounced + respects visibility, avoids storm on window focus
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') fetchTasks();
+      }, 600);
+    };
+    const onFocus = () => scheduleFetch();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleFetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [fetchTasks]);
 
   const openModal = (task: Task | null = null) => {
     if (task) {
@@ -111,8 +165,9 @@ const Tasks = () => {
       toast.success('Task deleted');
       setDeleteTarget(null);
       fetchTasks();
-    } catch (error) {
-      toast.error('Failed');
+    } catch (error: any) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') return;
+      toast.error(error?.response?.data?.message || 'Failed to delete task');
     }
   };
 
