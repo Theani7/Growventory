@@ -46,8 +46,14 @@ app.use(cors({
   credentials: true
 }));
 
-// Global rate limit: 200 req / 15min per IP
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
+// Global rate limit: 200 req / 15min per IP (login endpoint exempt)
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.originalUrl?.startsWith('/api/auth/login') || req.path?.startsWith('/api/auth/login')
+}));
 
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
