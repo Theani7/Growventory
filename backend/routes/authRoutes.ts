@@ -7,7 +7,19 @@ import { authenticate, authorize } from '../middleware/auth';
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  message: { success: false, message: 'Too many requests, please try again later.' }
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    const resetTime = (req as any).rateLimit?.resetTime;
+    const retryAfter = resetTime
+      ? Math.max(1, Math.ceil((new Date(resetTime).getTime() - Date.now()) / 1000))
+      : Math.ceil(options.windowMs / 1000);
+    res.status(options.statusCode || 429).json({
+      success: false,
+      message: 'Too many requests, please try again later.',
+      retryAfter
+    });
+  }
 });
 
 // Public routes
