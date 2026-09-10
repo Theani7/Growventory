@@ -4,7 +4,7 @@ import type { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { pool } from '../config/db';
 import { generateToken } from '../utils/generateToken';
 import { notifyAdminsAndSupervisors } from './notificationController';
-import { generateOTP, hashOTP, verifyOTP, getExpiryDate, OTP_MAX_ATTEMPTS, OTP_RESEND_COOLDOWN_SECONDS } from '../utils/otp';
+import { generateOTP, hashOTP, verifyOTP, getExpiryDate, OTP_MAX_ATTEMPTS } from '../utils/otp';
 import { sendVerificationOTP as sendVerificationEmail, sendPasswordResetOTP as sendPasswordResetEmail } from '../services/emailService';
 
 const isStrongPassword = (p: string) =>
@@ -24,17 +24,7 @@ const getSetting = async (key: string, defaultValue = ''): Promise<string> => {
 };
 
 // ---------------- OTP Helpers ----------------
-const canResendOTP = async (email: string, purpose: string): Promise<{ allowed: boolean; waitSeconds?: number }> => {
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT created_at FROM email_otps WHERE email = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1`,
-    [email, purpose]
-  );
-  if (rows.length === 0) return { allowed: true };
-  const last = new Date(rows[0].created_at as string).getTime();
-  const elapsed = (Date.now() - last) / 1000;
-  if (elapsed < OTP_RESEND_COOLDOWN_SECONDS) {
-    return { allowed: false, waitSeconds: Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - elapsed) };
-  }
+const canResendOTP = async (_email: string, _purpose: string): Promise<{ allowed: boolean; waitSeconds?: number }> => {
   return { allowed: true };
 };
 

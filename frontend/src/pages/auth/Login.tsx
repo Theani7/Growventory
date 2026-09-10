@@ -6,12 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-const formatCountdown = (totalSeconds: number): string => {
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
-
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -22,26 +16,9 @@ const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [verifyEmail, setVerifyEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
-  const [rateLimitRemaining, setRateLimitRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (rateLimitRemaining === null || rateLimitRemaining <= 0) return;
-    const timer = setInterval(() => {
-      setRateLimitRemaining((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(timer);
-          setError('');
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [rateLimitRemaining]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (rateLimitRemaining !== null && rateLimitRemaining > 0) return;
     setError('');
     setErrorCode('');
     setVerifyEmail('');
@@ -55,12 +32,6 @@ const Login = () => {
       if (result.success) navigate('/dashboard');
       else setError(result.message || 'Login failed');
     } catch (err: any) {
-      if (err.response?.status === 429) {
-        const retryAfter = err.response?.data?.retryAfter || Number(err.response?.headers?.['retry-after']) || 60;
-        setRateLimitRemaining(retryAfter);
-        setError('Too many failed login attempts.');
-        return;
-      }
       const msg = err.response?.data?.message || 'Invalid username or password';
       const code = err.response?.data?.code || '';
       setError(msg);
@@ -88,7 +59,6 @@ const Login = () => {
     }
   };
 
-  const isRateLimited = rateLimitRemaining !== null && rateLimitRemaining > 0;
   const isPending = errorCode === 'PENDING_APPROVAL';
   const isDisabled = errorCode === 'ACCOUNT_DISABLED';
   const isNeedVerify = errorCode === 'EMAIL_NOT_VERIFIED';
@@ -120,24 +90,9 @@ const Login = () => {
               </p>
             </div>
 
-            {(isRateLimited || error) && (
+            {error && (
               <div className="mb-5">
-                {isRateLimited ? (
-                  <div className="rounded-2xl border border-amber-300 bg-amber-50/80 p-4 flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-4 h-4 text-amber-700 animate-pulse" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-amber-900">Too many failed login attempts</p>
-                      <p className="text-sm text-amber-800/90 mt-1 leading-relaxed">
-                        For security, login is temporarily paused. You can try again in{' '}
-                        <span className="font-mono font-bold text-amber-950 bg-amber-200/70 px-1.5 py-0.5 rounded text-[13px]">
-                          {formatCountdown(rateLimitRemaining)}
-                        </span>.
-                      </p>
-                    </div>
-                  </div>
-                ) : isNeedVerify ? (
+                {isNeedVerify ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
                     <div className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -200,8 +155,8 @@ const Login = () => {
                     type="text"
                     value={formData.username}
                     onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setError(''); }}
-                    disabled={isLoading || (rateLimitRemaining !== null && rateLimitRemaining > 0)}
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition"
                     placeholder="you@example.com"
                     autoComplete="username"
                   />
@@ -219,12 +174,12 @@ const Login = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setError(''); }}
-                    disabled={isLoading || (rateLimitRemaining !== null && rateLimitRemaining > 0)}
-                    className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                    className="w-full pl-10 pr-10 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1d4d2e]/20 focus:border-[#1d4d2e] transition"
                     placeholder="Enter your password"
                     autoComplete="current-password"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={isLoading || (rateLimitRemaining !== null && rateLimitRemaining > 0)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700 disabled:opacity-60">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={isLoading} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -232,14 +187,18 @@ const Login = () => {
 
               <button
                 type="submit"
-                disabled={isLoading || (rateLimitRemaining !== null && rateLimitRemaining > 0)}
-                className="w-full min-h-[44px] mt-2 inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={isLoading}
+                className="w-full min-h-[44px] mt-2 inline-flex items-center justify-center gap-2 py-3.5 bg-[#1a3a2a] text-white font-semibold rounded-full hover:bg-[#143021] transition-all shadow-md shadow-[#1a3a2a]/20 hover:shadow-lg disabled:opacity-60"
               >
-                {rateLimitRemaining !== null && rateLimitRemaining > 0
-                  ? `Try again in ${formatCountdown(rateLimitRemaining)}`
-                  : isLoading
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</>
-                    : <>Sign in <ArrowRight className="w-4 h-4" /></>}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           </div>

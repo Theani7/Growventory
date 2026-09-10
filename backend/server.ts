@@ -3,7 +3,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import { testConnection } from './config/db';
 
 // Import routes
@@ -44,40 +43,6 @@ app.use(cors({
     process.env.FRONTEND_URL
   ].filter(Boolean) as string[],
   credentials: true
-}));
-
-const createRateLimitHandler = (defaultMessage: string) => {
-  return (req: Request, res: Response, next: NextFunction, options: any) => {
-    const resetTime = (req as any).rateLimit?.resetTime;
-    const retryAfter = resetTime
-      ? Math.max(1, Math.ceil((new Date(resetTime).getTime() - Date.now()) / 1000))
-      : Math.ceil(options.windowMs / 1000);
-    res.status(options.statusCode || 429).json({
-      success: false,
-      message: defaultMessage,
-      retryAfter
-    });
-  };
-};
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  skipSuccessfulRequests: true,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: createRateLimitHandler('Too many failed login attempts. Please wait before trying again.')
-});
-app.use('/api/auth/login', loginLimiter);
-
-// Global rate limit: 200 req / 15min per IP (login endpoint exempt)
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => req.originalUrl?.startsWith('/api/auth/login') || req.path?.startsWith('/api/auth/login'),
-  handler: createRateLimitHandler('Too many requests. Please wait before trying again.')
 }));
 
 app.use(express.json({ limit: '100kb' }));

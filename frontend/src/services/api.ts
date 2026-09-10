@@ -22,15 +22,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-const formatWaitTime = (seconds?: number): string => {
-  if (!seconds || isNaN(seconds) || seconds <= 0) return 'a moment';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m > 0 && s > 0) return `${m}m ${s}s`;
-  if (m > 0) return `${m} minute${m > 1 ? 's' : ''}`;
-  return `${s} second${s > 1 ? 's' : ''}`;
-};
-
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -49,10 +40,7 @@ api.interceptors.response.use(
 
     // Rate-limited — surface once
     if (error.response?.status === 429) {
-      if (!isLoginRequest) {
-        const retryAfter = error.response?.data?.retryAfter || Number(error.response?.headers?.['retry-after']);
-        toast.error('Too many requests. Please wait ' + formatWaitTime(retryAfter) + ' before retrying.');
-      }
+      toast.error('Too many requests. Please wait a moment and retry.');
       return Promise.reject(error);
     }
 

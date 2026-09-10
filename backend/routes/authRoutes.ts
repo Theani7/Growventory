@@ -1,35 +1,16 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 const router = express.Router();
 import { register, login, getCurrentUser, seedRoles, sendVerificationOTP, verifyEmail, forgotPassword, verifyResetOTP, resetPassword } from '../controllers/authController';
 import { authenticate, authorize } from '../middleware/auth';
 
-const otpLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res, next, options) => {
-    const resetTime = (req as any).rateLimit?.resetTime;
-    const retryAfter = resetTime
-      ? Math.max(1, Math.ceil((new Date(resetTime).getTime() - Date.now()) / 1000))
-      : Math.ceil(options.windowMs / 1000);
-    res.status(options.statusCode || 429).json({
-      success: false,
-      message: 'Too many requests, please try again later.',
-      retryAfter
-    });
-  }
-});
-
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
-router.post('/send-verification-otp', otpLimiter, sendVerificationOTP);
-router.post('/verify-email', otpLimiter, verifyEmail);
-router.post('/forgot-password', otpLimiter, forgotPassword);
-router.post('/verify-reset-otp', otpLimiter, verifyResetOTP);
-router.post('/reset-password', otpLimiter, resetPassword);
+router.post('/send-verification-otp', sendVerificationOTP);
+router.post('/verify-email', verifyEmail);
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-reset-otp', verifyResetOTP);
+router.post('/reset-password', resetPassword);
 
 // Protected routes
 router.get('/me', authenticate, getCurrentUser);
