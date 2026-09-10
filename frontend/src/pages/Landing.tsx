@@ -113,10 +113,12 @@ scrolled
               <div className="relative lg:ml-4 min-w-0 overflow-hidden">
                 <div className="relative rounded-[24px] overflow-hidden bg-stone-100 shadow-2xl shadow-stone-900/10 border border-stone-200 min-w-0">
                   <img
-                    src="/hero-greenhouse.png"
+                    src="/hero-greenhouse.webp"
                     alt="Modern greenhouse interior with lush plants on wooden benches, sunlit"
                     className="w-full h-[300px] sm:h-[420px] lg:h-[560px] object-cover"
                     loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                   />
                   {/* Subtle gradient scrim for legibility of overlay card */}
                   <div className="absolute inset-0 bg-gradient-to-t from-stone-900/10 via-transparent to-transparent pointer-events-none" />
@@ -203,10 +205,11 @@ scrolled
             <Reveal variant="fade-up" className="lg:col-span-7">
               <div className="relative h-full min-h-[420px] rounded-[20px] overflow-hidden bg-stone-900 border border-stone-200 group">
                 <img
-                  src="/feature-inventory.png"
+                  src="/feature-inventory.webp"
                   alt="Top-down of six potted plants with QR tags and inventory clipboard, gloved hands"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/70 via-stone-900/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -277,10 +280,11 @@ scrolled
           <div className="lg:col-span-6 min-w-0">
             <div className="relative rounded-[20px] overflow-hidden bg-stone-100 border border-stone-200 min-w-0">
               <img
-                src="/team-nursery.jpeg"
+                src="/team-nursery.webp"
                 alt="Three nursery workers in aprons looking at tablet with growth data inside greenhouse"
                 className="w-full h-[280px] sm:h-[400px] lg:h-[480px] object-cover object-center"
                 loading="lazy"
+                decoding="async"
               />
               <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur rounded-xl border border-stone-200 p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#eef6ee] flex items-center justify-center">
@@ -336,10 +340,11 @@ scrolled
       {/* CTA aerial image background */}
       <section className="relative mx-4 sm:mx-6 lg:mx-8 my-10 rounded-[24px] overflow-hidden border border-stone-200 min-w-0">
         <img
-          src="/cta-aerial.png"
+          src="/cta-aerial.webp"
           alt="Aerial view of nursery fields at golden hour with neat rows of seedlings"
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-[#1a3a2a]/80 backdrop-blur-[1px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
